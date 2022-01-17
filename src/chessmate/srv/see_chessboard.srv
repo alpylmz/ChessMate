@@ -1,0 +1,7 @@
+---
+# 0 if cannot see, 1 if can see it clearly!
+int8 can_see_chessboard
+chessmate/pose chessboard_left_bottom_pose
+chessmate/pose chessboard_left_top_pose
+chessmate/pose chessboard_right_bottom_pose
+chessmate/pose chessboard_right_top_pose
