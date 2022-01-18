@@ -32,11 +32,11 @@ int main(int argc, char** argv){
     // Another solution may be getting that necessary code from that node to here, but I think it will be more clear when we really use this code with robot
     // So I only left this suggestion here
 
-    ros::ServiceClient start_or_stop_franka_control_node_client = n.serviceClient<chessmate::franka_control_start_stop>("/franka_control_start_stop")
+    ros::ServiceClient start_or_stop_franka_control_node_client = n.serviceClient<chessmate::franka_control_start_stop>("/franka_control_start_stop");
     chessmate::franka_control_start_stop franka_control_start;
-    franka_control_start.start_or_stop = 0;
+    franka_control_start.request.start_or_stop = 0;
     while(!start_or_stop_franka_control_node_client.call(franka_control_start)){
-        ROS_WARN_STREAM("Franka control node cannot be started.")
+        ROS_WARN_STREAM("Franka control node cannot be started.");
         ros::Duration(1).sleep();
     }
     ROS_INFO_STREAM("Franka control is started. You can get robot information now.");
@@ -58,20 +58,18 @@ int main(int argc, char** argv){
     // Search for chessboard
     bool rotate_orientation = true;
     while(true){
-        auto call_success = can_see_chessboard_client.call(can_see_chessboard);
-        
-        if(!call_success){
+        while(!can_see_chessboard_client.call(can_see_chessboard)){
             ROS_WARN_STREAM("Vision system is not open yet!");
             ros::Duration(1).sleep();
         }
-        if(can_see_chessboard.response.can_see_chessboard == 1){
+        if(can_see_chessboard.response.can_see_chessboard == 0){
             chessboard_left_bottom_pose  = can_see_chessboard.response.chessboard_left_bottom_pose;
             chessboard_left_top_pose     = can_see_chessboard.response.chessboard_left_top_pose;
             chessboard_right_bottom_pose = can_see_chessboard.response.chessboard_right_bottom_pose;
             chessboard_right_top_pose    = can_see_chessboard.response.chessboard_right_top_pose;
             break;
         }
-        else if(can_see_chessboard.response.can_see_chessboard == 0){
+        else if(can_see_chessboard.response.can_see_chessboard == 1){
             ROS_WARN_STREAM("Cannot find the chessboard yet!");
             
             // send following info to command topic!
@@ -101,6 +99,8 @@ int main(int argc, char** argv){
         
     }
 
+    ROS_INFO_STREAM("Chessboard found!");
+
     // from here, neutral pose is the pose that looks to the chessboard, will be used later!!!!
 
     // main control loop preparations
@@ -110,6 +110,8 @@ int main(int argc, char** argv){
     chessmate::next_move next_move;
     ros::ServiceClient pick_and_place_client = n.serviceClient<chessmate::pick_and_place>("/pick_and_place");
     chessmate::pick_and_place pick_and_place;
+
+    ROS_INFO_STREAM("Main loop starting!");
 
     // main control starts here!
     while(true){
@@ -126,31 +128,31 @@ int main(int argc, char** argv){
         // If player cheated, send the info to the HRI, and let HRI to finish its movement!!
         // If player plays correctly, send the info to vision, get the coordinates, send them to motion planner node
         // USER CHEATED!
-        if(chess_move.is_state_valid == 0){
+        if(chess_move.response.is_state_valid == 0){
             ROS_WARN_STREAM("Player cheated!");
-            pick_and_place.is_something_hacky = 1;
+            pick_and_place.request.is_something_hacky = 1;
             while(!pick_and_place_client.call(pick_and_place)){
                 ROS_WARN_STREAM("Pick and place call unsuccessful!");
                 ros::Duration(0.01).sleep();
             }
         }
         else{
-            next_move.take_place_x = chess_move.take_place_x;
-            next_move.take_place_y = chess_move.take_place_y;
-            next_move.put_place_x = chess_move.put_place_x;
-            next_move.put_place_y = chess_move.put_place_y;
+            next_move.request.take_place_x = chess_move.response.take_place_x;
+            next_move.request.take_place_y = chess_move.response.take_place_y;
+            next_move.request.put_place_x = chess_move.response.put_place_x;
+            next_move.request.put_place_y = chess_move.response.put_place_y;
             while(!next_move_client.call(next_move)){
                 ROS_WARN_STREAM("Next move call unsuccessful!");
                 ros::Duration(0.01).sleep();
             }
 
-            pick_and_place.take_coord_x = next_move.take_coord_x;
-            pick_and_place.take_coord_y = next_move.take_coord_y;
-            pick_and_place.take_coord_z = next_move.take_coord_z;
-            pick_and_place.put_coord_x = next_move.put_coord_x;
-            pick_and_place.put_coord_y = next_move.put_coord_y;
-            pick_and_place.put_coord_z = next_move.put_coord_z;
-            pick_and_place.is_something_hacky = 0;
+            pick_and_place.request.take_coord_x = next_move.response.take_coord_x;
+            pick_and_place.request.take_coord_y = next_move.response.take_coord_y;
+            pick_and_place.request.take_coord_z = next_move.response.take_coord_z;
+            pick_and_place.request.put_coord_x = next_move.response.put_coord_x;
+            pick_and_place.request.put_coord_y = next_move.response.put_coord_y;
+            pick_and_place.request.put_coord_z = next_move.response.put_coord_z;
+            pick_and_place.request.is_something_hacky = 0;
             while(!pick_and_place_client.call(pick_and_place)){
                 ROS_WARN_STREAM("Pick and place call unsuccessful!");
                 ros::Duration(0.01).sleep();

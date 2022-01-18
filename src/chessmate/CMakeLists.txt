@@ -14,6 +14,10 @@ add_service_files(
   FILES 
   franka_on.srv
   see_chessboard.srv
+  chess_next_move.srv
+  franka_control_start_stop.srv
+  next_move.srv
+  pick_and_place.srv
 )
 
 ## Generate added messages and services
