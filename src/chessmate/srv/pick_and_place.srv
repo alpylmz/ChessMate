@@ -1,0 +1,9 @@
+# 0 if no problem, 1 if player cheated
+int8 is_something_hacky
+float64 take_coord_x
+float64 take_coord_y
+float64 take_coord_z
+float64 put_coord_x
+float64 put_coord_y
+float64 put_coord_z
+---

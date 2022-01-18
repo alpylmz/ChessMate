@@ -1,0 +1,7 @@
+---
+# 0 if not valid, 1 for valid
+int8 is_state_valid
+int8 take_place_x
+int8 take_place_y
+int8 put_place_x
+int8 put_place_y

@@ -1,8 +1,17 @@
 #include <ros/ros.h>
+#include "chessmate/helper.h"
+
+// messages
+#include "chessmate/pose.h"
+
+// services
 #include "chessmate/franka_on.h"
 #include "chessmate/see_chessboard.h"
-#include "chessmate/pose.h"
-#include "chessmate/helper.h"
+#include "chessmate/franka_control_start_stop.h"
+#include "chessmate/chess_next_move.h"
+#include "chessmate/next_move.h"
+#include "chessmate/pick_and_place.h"
+
 
 
 int main(int argc, char** argv){
@@ -17,6 +26,21 @@ int main(int argc, char** argv){
         ros::Duration(1).sleep();
     }
     ROS_INFO_STREAM("Franka is connected.");
+    
+    // Here franka_control package's franka_control node should be started
+    // or we can get into the source code of it, and open and close it with a service, I wrote it here
+    // Another solution may be getting that necessary code from that node to here, but I think it will be more clear when we really use this code with robot
+    // So I only left this suggestion here
+
+    ros::ServiceClient start_or_stop_franka_control_node_client = n.serviceClient<chessmate::franka_control_start_stop>("/franka_control_start_stop")
+    chessmate::franka_control_start_stop franka_control_start;
+    franka_control_start.start_or_stop = 0;
+    while(!start_or_stop_franka_control_node_client.call(franka_control_start)){
+        ROS_WARN_STREAM("Franka control node cannot be started.")
+        ros::Duration(1).sleep();
+    }
+    ROS_INFO_STREAM("Franka control is started. You can get robot information now.");
+
 
     // First, do not give commands to external things.
     PandaJoints neutral_pose;
@@ -79,6 +103,64 @@ int main(int argc, char** argv){
 
     // from here, neutral pose is the pose that looks to the chessboard, will be used later!!!!
 
+    // main control loop preparations
+    ros::ServiceClient chess_next_move_client = n.serviceClient<chessmate::chess_next_move>("/chess_next_move");
+    chessmate::chess_next_move chess_move;
+    ros::ServiceClient next_move_client = n.serviceClient<chessmate::next_move>("/next_move");
+    chessmate::next_move next_move;
+    ros::ServiceClient pick_and_place_client = n.serviceClient<chessmate::pick_and_place>("/pick_and_place");
+    chessmate::pick_and_place pick_and_place;
+
+    // main control starts here!
+    while(true){
+        // check here if franka still on, however I do not know how to do this here TODO
+
+        // error check and cleaning TODO
+
+        // I assume that the stockfish node takes the chessboard info itself
+        while(!chess_next_move_client.call(chess_move)){
+            ROS_WARN_STREAM("Chess next move call unsuccessful!");
+            ros::Duration(0.01).sleep();
+        }
+
+        // If player cheated, send the info to the HRI, and let HRI to finish its movement!!
+        // If player plays correctly, send the info to vision, get the coordinates, send them to motion planner node
+        // USER CHEATED!
+        if(chess_move.is_state_valid == 0){
+            ROS_WARN_STREAM("Player cheated!");
+            pick_and_place.is_something_hacky = 1;
+            while(!pick_and_place_client.call(pick_and_place)){
+                ROS_WARN_STREAM("Pick and place call unsuccessful!");
+                ros::Duration(0.01).sleep();
+            }
+        }
+        else{
+            next_move.take_place_x = chess_move.take_place_x;
+            next_move.take_place_y = chess_move.take_place_y;
+            next_move.put_place_x = chess_move.put_place_x;
+            next_move.put_place_y = chess_move.put_place_y;
+            while(!next_move_client.call(next_move)){
+                ROS_WARN_STREAM("Next move call unsuccessful!");
+                ros::Duration(0.01).sleep();
+            }
+
+            pick_and_place.take_coord_x = next_move.take_coord_x;
+            pick_and_place.take_coord_y = next_move.take_coord_y;
+            pick_and_place.take_coord_z = next_move.take_coord_z;
+            pick_and_place.put_coord_x = next_move.put_coord_x;
+            pick_and_place.put_coord_y = next_move.put_coord_y;
+            pick_and_place.put_coord_z = next_move.put_coord_z;
+            pick_and_place.is_something_hacky = 0;
+            while(!pick_and_place_client.call(pick_and_place)){
+                ROS_WARN_STREAM("Pick and place call unsuccessful!");
+                ros::Duration(0.01).sleep();
+            }
+        }
+
+        // Here we need to check if HRI part or motion planner part completed their movements.
+        // However, I am not sure which way is the best since we did not implement these parts.
+        // So I left it here...
+    }
 
 
 }

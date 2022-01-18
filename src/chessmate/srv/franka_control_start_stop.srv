@@ -1,0 +1,3 @@
+# 0 for start, 1 for stop command
+int8 start_or_stop
+---
