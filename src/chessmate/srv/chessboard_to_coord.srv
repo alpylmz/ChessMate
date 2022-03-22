@@ -1,0 +1,11 @@
+int8 take_place_x
+int8 take_place_y
+int8 put_place_x
+int8 put_place_y
+---
+float32 take_place_x
+float32 take_place_y
+float32 take_place_z
+float32 put_place_x
+float32 put_place_y
+float32 put_place_z

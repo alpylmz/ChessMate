@@ -13,10 +13,11 @@ add_message_files(
 add_service_files(
   FILES 
   franka_on.srv
+  chess_opponent_move.srv
+  chessboard_to_coord.srv
   see_chessboard.srv
   chess_next_move.srv
   franka_control_start_stop.srv
-  next_move.srv
   pick_and_place.srv
 )
 
