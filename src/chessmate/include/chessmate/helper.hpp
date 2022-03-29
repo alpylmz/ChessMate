@@ -1,41 +1,42 @@
 #include <ros/ros.h>
 #include "chessmate/see_chessboard.h"
+#include "franka_msgs/QueryVisionComponent.h"
 
 // This function waits until chessboard can be seen
 // if chessboard cannot be seen,
  
 void canSeeChessboard(){
-    ros::ServiceClient can_see_chessboard_client = n.serviceClient<chessmate::see_chessboard>("/can_see_chessboard");
-    while(!can_see_chessboard_client.call(can_see_chessboard)){
-        ROS_WARN_STREAM("Cannot see chessboard!");
+    ros::ServiceClient vision_client = n.serviceClient<franka_msgs::QueryVisionComponent>("/franka_vision/query_component");
+    franka_msgs::QueryVisionComponent vision_srv_request;
+    vision_srv_request.request.fen_string = fen_string;
+    while(true){
+        if(vision_srv.call(vision_srv_request)){
+            // here asd will be a bool, but I don't know which bool does what, since Burak did not write it in his code
+            if(vision_srv_request.response.asd){
+                break;
+            }
+        }
         ros::Duration(1).sleep();
     }
 }
 
 // This function searches until chessboard is found
 void searchChessboard(){
-    chessmate::see_chessboard can_see_chessboard;
-    chessmate::pose chessboard_left_bottom_pose;
-    chessmate::pose chessboard_left_top_pose;
-    chessmate::pose chessboard_right_bottom_pose;
-    chessmate::pose chessboard_right_top_pose;
+    ros::ServiceClient vision_client = n.serviceClient<franka_msgs::QueryVisionComponent>("/franka_vision/query_component");
+    franka_msgs::QueryVisionComponent vision_srv_request;
+    vision_srv_request.request.fen_string = fen_string;
     bool rotate_orientation = true;
     
-    // If the client call is not successfull
-    // Assume that the vision system is not ready yet
-
     while(true){
-        while(!can_see_chessboard_client.call(can_see_chessboard)){
+        while(!can_see_chessboard_client.call(vision_srv_request)){
             ROS_WARN_STREAM("Vision system is not open yet or sth is very wrong!");
             ros::Duration(1).sleep();
         }
+        // need to change can_see_chessboard!!!!!!!!!
         if(can_see_chessboard.response.can_see_chessboard == 0){
-            chessboard_left_bottom_pose  = can_see_chessboard.response.chessboard_left_bottom_pose;
-            chessboard_left_top_pose     = can_see_chessboard.response.chessboard_left_top_pose;
-            chessboard_right_bottom_pose = can_see_chessboard.response.chessboard_right_bottom_pose;
-            chessboard_right_top_pose    = can_see_chessboard.response.chessboard_right_top_pose;
             break;
         }
+        // need to change can_see_chessboard!!!!!!!
         else if(can_see_chessboard.response.can_see_chessboard == 1){
             ROS_WARN_STREAM("Cannot find the chessboard yet!");
             

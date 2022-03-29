@@ -1,4 +1,6 @@
 #include <ros/ros.h>
+#include <string>
+
 #include "chessmate/helper.h"
 
 // messages
@@ -11,7 +13,9 @@
 #include "chessmate/chess_next_move.h"
 #include "chessmate/pick_and_place.h"
 #include "chessmate/chessboard_to_coord.h"
+#include "franka_msgs/QueryVisionComponent.h"
 
+std::string fen_string = "";
 
 int main(int argc, char** argv){
     ros::init(argc, argv, "chessmate");
@@ -27,6 +31,15 @@ int main(int argc, char** argv){
         ros::Duration(1).sleep();
     }
     ROS_INFO_STREAM("Franka is connected.");
+
+    ros::ServiceClient vision_client = n.serviceClient<franka_msgs::QueryVisionComponent>("/franka_vision/query_component");
+    franka_msgs::QueryVisionComponent vision_srv_request;
+    vision_srv_request.request.fen_string = fen_string;
+    while(!vision_srv.call(vision_srv_request)){
+        ROS_WARN_STREAM("Vision is not connected to system!");
+        ros::Duration(1).sleep();
+    }
+
     // ------------------------------------------------------------------------------------------
 
     // can be commented tomorrow
@@ -64,8 +77,6 @@ int main(int argc, char** argv){
     chessmate::chess_next_move chess_move;
     ros::ServiceClient pick_and_place_client = n.serviceClient<chessmate::pick_and_place>("/pick_and_place");
     chessmate::pick_and_place pick_and_place;
-    ros::ServiceClient find_coordinates_from_chessboard_client = n.serviceClient<chessmate::chessboard_to_coord>("/chessboard_to_coord");
-    chessmate::chessboard_to_coord chessboard_to_coord;
 
     ROS_INFO_STREAM("Main loop starting!");
 
@@ -77,6 +88,18 @@ int main(int argc, char** argv){
 
         // get chessboard info from vision system
         // commented until it is implemented!
+        vision_srv_request.fen_string = god_knows_where_this_comes_from;
+        auto resp = vision_client.call(vision_srv_request);
+        if(!resp.ok()){
+            ROS_WARN_STREAM("Vision is not connected to system!");
+            ros::Duration(1).sleep();
+        }
+        else{
+            // I think this string is the new fen string, but I am really not sure, and I have really no idea what Burak's code does.
+            auto new_str = vision_srv_request.unkown_str;
+        
+            auto some_new_string_that_will_be_used_in_commands_or_new_fen_string = new_str;
+        }
         /*
 
         // send the chessboard info to stockfish
