@@ -3,12 +3,12 @@ import pyrealsense2 as real_sense
 import numpy as np
 import copy
 import os
-from skimage.metrics import structural_similarity
+from scikit-image.metrics import structural_similarity
 
 # get current directory
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
-EMPTY_IMAGE_PATH = current_dir + "empty_square_photos/"
+EMPTY_IMAGE_PATH = current_dir + "/empty_square_photos/"
 SQUARE_WIDTH = 4.1
 
 
