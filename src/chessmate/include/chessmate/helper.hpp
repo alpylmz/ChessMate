@@ -1,27 +1,10 @@
 #include <ros/ros.h>
 #include "chessmate/see_chessboard.h"
-#include "franka_msgs/QueryVisionComponent.h"
+#include "chessmate/QueryVisionComponent.h"
 
-// This function waits until chessboard can be seen
-// if chessboard cannot be seen,
- 
-void canSeeChessboard(){
-    ros::ServiceClient vision_client = n.serviceClient<franka_msgs::QueryVisionComponent>("/franka_vision/query_component");
-    franka_msgs::QueryVisionComponent vision_srv_request;
-    vision_srv_request.request.fen_string = fen_string;
-    while(true){
-        if(vision_srv.call(vision_srv_request)){
-            // here asd will be a bool, but I don't know which bool does what, since Burak did not write it in his code
-            if(vision_srv_request.response.asd){
-                break;
-            }
-        }
-        ros::Duration(1).sleep();
-    }
-}
-
+/*
 // This function searches until chessboard is found
-void searchChessboard(){
+void searchChessboard(ros::NodeHandle n){
     ros::ServiceClient vision_client = n.serviceClient<franka_msgs::QueryVisionComponent>("/franka_vision/query_component");
     franka_msgs::QueryVisionComponent vision_srv_request;
     vision_srv_request.request.fen_string = fen_string;
@@ -67,7 +50,7 @@ void searchChessboard(){
         
     }
 }
-
+*/
 struct PandaJoints{
     float joint0;
     float joint1;

@@ -19,6 +19,7 @@ add_service_files(
   chess_next_move.srv
   franka_control_start_stop.srv
   pick_and_place.srv
+  QueryVisionComponent.srv
 )
 
 ## Generate added messages and services

@@ -1,0 +1,6 @@
+string last_state_fen_string
+---
+bool success
+bool can_see_chessboard
+bool is_there_movement 
+string movement_in_fen

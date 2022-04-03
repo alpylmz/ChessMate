@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 #include <string>
 
-#include "chessmate/helper.h"
+#include "chessmate/helper.hpp"
 
 // messages
 #include "chessmate/pose.h"
@@ -13,14 +13,14 @@
 #include "chessmate/chess_next_move.h"
 #include "chessmate/pick_and_place.h"
 #include "chessmate/chessboard_to_coord.h"
-#include "franka_msgs/QueryVisionComponent.h"
+#include "chessmate/QueryVisionComponent.h"
 
 std::string fen_string = "";
 
 int main(int argc, char** argv){
     ros::init(argc, argv, "chessmate");
     ros::NodeHandle n;
-
+    /*
     // can be commented tomorrow
     // ------------------------------------------------------------------------------------------
     // checks if the system is open, with "/franka_on" service!
@@ -31,14 +31,18 @@ int main(int argc, char** argv){
         ros::Duration(1).sleep();
     }
     ROS_INFO_STREAM("Franka is connected.");
+    */
+    // ------------------------------------------------------------------------------------------
 
-    ros::ServiceClient vision_client = n.serviceClient<franka_msgs::QueryVisionComponent>("/franka_vision/query_component");
-    franka_msgs::QueryVisionComponent vision_srv_request;
-    vision_srv_request.request.fen_string = fen_string;
-    while(!vision_srv.call(vision_srv_request)){
+
+    ros::ServiceClient vision_client = n.serviceClient<chessmate::QueryVisionComponent>("/franka_vision/query_component");
+    chessmate::QueryVisionComponent vision_srv_request;
+    vision_srv_request.request.last_state_fen_string = fen_string;
+    while(!vision_client.call(vision_srv_request)){
         ROS_WARN_STREAM("Vision is not connected to system!");
         ros::Duration(1).sleep();
     }
+    
 
     // ------------------------------------------------------------------------------------------
 
@@ -64,7 +68,7 @@ int main(int argc, char** argv){
     // assign the robot to neutral pose, or save it here and give it!
     float joint0_start = neutral_pose.joint0;
 
-    searchChessboard();    
+    //searchChessboard();    
 
     ROS_INFO_STREAM("Chessboard found!");
     
@@ -88,17 +92,18 @@ int main(int argc, char** argv){
 
         // get chessboard info from vision system
         // commented until it is implemented!
-        vision_srv_request.fen_string = god_knows_where_this_comes_from;
+        std::string god_knows_where_this_comes_from;
+        vision_srv_request.request.last_state_fen_string = god_knows_where_this_comes_from;
         auto resp = vision_client.call(vision_srv_request);
-        if(!resp.ok()){
+        if(!resp){
             ROS_WARN_STREAM("Vision is not connected to system!");
             ros::Duration(1).sleep();
         }
         else{
             // I think this string is the new fen string, but I am really not sure, and I have really no idea what Burak's code does.
-            auto new_str = vision_srv_request.unkown_str;
+            //TODOauto new_str = vision_srv_request.unkown_str;
         
-            auto some_new_string_that_will_be_used_in_commands_or_new_fen_string = new_str;
+            // TODOauto some_new_string_that_will_be_used_in_commands_or_new_fen_string = new_str;
         }
         /*
 
@@ -122,16 +127,19 @@ int main(int argc, char** argv){
         }
         else{
         */
+            chessmate::chessboard_to_coord chessboard_to_coord;
             chessboard_to_coord.request.take_place_x = chess_move.response.take_place_x;
             chessboard_to_coord.request.take_place_y = chess_move.response.take_place_y;
             chessboard_to_coord.request.put_place_x = chess_move.response.put_place_x;
             chessboard_to_coord.request.put_place_y = chess_move.response.put_place_y;
             
+            /*
             while(!find_coordinates_from_chessboard_client.call(chessboard_to_coord)){
                 ROS_WARN_STREAM("find coordinates from chessboard call unsuccessful!");
                 ros::Duration(0.01).sleep();
             }
-
+            */
+            /*
             pick_and_place.request.take_coord_x = next_move.response.take_coord_x;
             pick_and_place.request.take_coord_y = next_move.response.take_coord_y;
             pick_and_place.request.take_coord_z = next_move.response.take_coord_z;
@@ -143,6 +151,7 @@ int main(int argc, char** argv){
                 ROS_WARN_STREAM("Pick and place call unsuccessful!");
                 ros::Duration(0.01).sleep();
             }
+            */
         //}
 
         // Here we need to check if HRI part or motion planner part completed their movements.
