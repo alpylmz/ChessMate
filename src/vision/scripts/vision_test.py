@@ -63,6 +63,7 @@ class Difference():
                                           gradientSize=gradientSize, useHarrisDetector=useHarrisDetector, k=k)
         radius = 4
 
+
         right_most = 0
         r_x, r_y = 0, 0
         left_most = float('inf')
@@ -110,6 +111,12 @@ class Difference():
         width = r_x - l_x
         height = l_y - u_y
 
+
+        l_x = int(l_x)
+        u_y = int(u_y)
+        width = int(width)
+        height = int(height)
+
         cv2.rectangle(image, (l_x, u_y), (l_x + width, u_y + height), (255, 255, 255), 1)
 
         height_offset = 20
@@ -153,7 +160,7 @@ class Difference():
                 resized_square_image = cv2.resize(square_image,(self.empty_images_array[i][j].shape[1],self.empty_images_array[i][j].shape[0]),interpolation=cv2.INTER_AREA)
                 difference_score = self.get_similarity_score(resized_square_image,self.empty_images_array[i][j])
 
-                if difference_score > 0.70:
+                if difference_score > 0.80:
                     cv2.putText(img=square_image,
                                 text="Empty",
                                 org=(0,0),

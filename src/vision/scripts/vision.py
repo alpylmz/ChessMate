@@ -3,7 +3,7 @@ import pyrealsense2 as real_sense
 import numpy as np
 import copy
 import os
-from scikit-image.metrics import structural_similarity
+from skimage.metrics import structural_similarity
 
 # get current directory
 current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -141,6 +141,14 @@ class Vision():
         height = l_y - u_y
 
 
+
+        l_x = int(l_x)
+        u_y = int(u_y)
+        width = int(width)
+        height = int(height)
+
+
+
         height_offset = 20
         width_offset = 20
         height = height - height_offset * 2
@@ -203,7 +211,7 @@ class Vision():
                 difference_score = self.get_similarity_score(resized_square_image,self.empty_images_array[i][j])
 
 
-                if difference_score > 0.75 :
+                if difference_score > 0.80 :
                     cv2.putText(img=square_image,
                                 text="Empty",
                                 org=(0,0),
@@ -237,7 +245,7 @@ class Vision():
                 coordinate_list.append((x_coordinate+ SQUARE_WIDTH, y_coordinate)) # Top right
                 coordinate_list.append((x_coordinate + SQUARE_WIDTH, y_coordinate - SQUARE_WIDTH)) # Bottom right
                 coordinate_list.append((x_coordinate, y_coordinate - SQUARE_WIDTH))  # Bottom left
-                coordinates[get_square_as_string(i,j)] = coordinate_list
+                coordinates[self.get_square_as_string(i,j)] = coordinate_list
                 x_coordinate += SQUARE_WIDTH
 
         return coordinates
@@ -299,4 +307,13 @@ class Vision():
         except Exception:
             self.pipeline.stop()
             return False,False,""
+
+
+
+
+if __name__ == '__main__':
+    vision = Vision()
+
+    print(vision.get_movement('8/5Pp1/p7/6K1/8/3B1Pkp/1r3R2/8 w - - 0 1'))
+
 
