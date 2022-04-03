@@ -5,9 +5,10 @@ import copy
 import os
 from skimage.metrics import structural_similarity
 
+# get current directory
+current_dir = os.path.dirname(os.path.realpath(__file__))
 
-
-EMPTY_IMAGE_PATH = "/home/burak/Desktop/21-22-Fall-Ders-Materyalleri/491/Project-OpenCV-Studies/difference-studies/empty-square-photos/"
+EMPTY_IMAGE_PATH = current_dir + "empty_square_photos/"
 SQUARE_WIDTH = 4.1
 
 
