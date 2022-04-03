@@ -1,7 +1,6 @@
 import cv2
 import pyrealsense2 as real_sense
 import numpy as np
-import copy
 import os
 from skimage.metrics import structural_similarity
 
@@ -11,12 +10,19 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 EMPTY_IMAGE_PATH = current_dir + "/empty_square_photos/"
 SQUARE_WIDTH = 4.1
 
+QUALITY_LEVEL = 0.15  # 0.05 for paper.
+MIN_DISTANCE = 10
+BLOCK_SIZE = 3
+GRADIENT_SIZE = 3
+USE_HARRIS_DETECTOR = False
+K = 0.04
 
 class Vision():
     def __init__(self):
         self.square_information = np.ones((8, 8), dtype=str)
         self.empty_images_array = np.ones((8, 8), dtype=list)
         self.read_empty_images()
+        self.initialize_realsense()
 
 
     def get_square_as_string(self,i, j):
@@ -86,17 +92,10 @@ class Vision():
 
 
     def find_corners(self,image):
-        qualityLevel = 0.15  # 0.05 for paper.
-        minDistance = 10
-        blockSize = 3
-        gradientSize = 3
-        useHarrisDetector = False
-        k = 0.04
 
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        corners = cv2.goodFeaturesToTrack(gray_image, 300, qualityLevel, minDistance, None, blockSize=blockSize,
-                                          gradientSize=gradientSize, useHarrisDetector=useHarrisDetector, k=k)
-        radius = 4
+        corners = cv2.goodFeaturesToTrack(gray_image, 300, QUALITY_LEVEL, MIN_DISTANCE, None, blockSize=BLOCK_SIZE,
+                                          gradientSize=GRADIENT_SIZE, useHarrisDetector=USE_HARRIS_DETECTOR, k=K)
 
         right_most = 0
         r_x, r_y = 0, 0
@@ -254,7 +253,6 @@ class Vision():
 
     def get_movement(self,last_state_fen_string):
         try:
-            self.initialize_realsense()
             counter = 0
             while True:
                 frames = self.pipeline.wait_for_frames()
@@ -265,7 +263,7 @@ class Vision():
                 if not color_frame:
                     continue
 
-                if counter < 40:
+                if counter < 5:
                     counter += 1
                     continue
 
@@ -276,7 +274,6 @@ class Vision():
 
                 ## Chessboard not properly detected.
                 if square_width < 20 or square_height < 20 or abs(square_width - square_height) > 5 :
-                    self.pipeline.stop()
                     return False,False,""
 
 
@@ -286,12 +283,10 @@ class Vision():
 
                 ## No movement detected.
                 if (last_state == self.square_information).all() :
-                    self.pipeline.stop()
                     return True,False,""
 
 
                 ## Movement detected.
-                self.pipeline.stop()
                 number_of_differences, movement = self.decide_movement_with_comparing_states(last_state,self.square_information)
 
                 ## In proper case, difference should not be greater than 2.
@@ -304,8 +299,8 @@ class Vision():
 
                 return True,True,""
 
-        except Exception:
-            self.pipeline.stop()
+        except Exception as e:
+            print(e)
             return False,False,""
 
 
