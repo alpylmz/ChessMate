@@ -15,10 +15,10 @@ if __name__ == "__main__":
 
     # queryvisioncomponent handler, executes vision_system.get_movement()
     def queryvisioncomponent_handler(req):
-        can_see_chessboard, is_there_movement, movement_in_fen = vision_system.get_movement(req.fen_string)
+        can_see_chessboard, is_there_movement, movement_in_fen = vision_system.get_movement(req.last_state_fen_string)
         return QueryVisionComponentResponse(True, can_see_chessboard, is_there_movement, movement_in_fen)
 
     # start a ros service
-    rospy.Service('/franka_vision', QueryVisionComponent, vision_system.query_vision_component)
+    rospy.Service('/franka_vision', QueryVisionComponent, queryvisioncomponent_handler)
 
     rospy.spin()
