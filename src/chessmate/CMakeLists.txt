@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(chessmate)
 
 ## Find catkin and any catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg franka_msgs)
 
 ## Declare ROS messages and services
 add_message_files(
@@ -20,6 +20,7 @@ add_service_files(
   franka_control_start_stop.srv
   pick_and_place.srv
   QueryVisionComponent.srv
+  getPositionOfPieces.srv
 )
 
 ## Generate added messages and services

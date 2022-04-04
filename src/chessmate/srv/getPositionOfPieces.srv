@@ -1,0 +1,8 @@
+string from_piece # "a8"
+string to_piece # "f1"
+---
+bool success
+float32 from_x
+float32 from_y
+float32 to_x
+float32 to_y

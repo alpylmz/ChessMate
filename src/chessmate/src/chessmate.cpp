@@ -14,8 +14,13 @@
 #include "chessmate/pick_and_place.h"
 #include "chessmate/chessboard_to_coord.h"
 #include "chessmate/QueryVisionComponent.h"
+#include "chessmate/chess_opponent_move.h"
+#include "chessmate/chess_next_move.h"
+#include "chessmate/getPositionOfPieces.h"
 
-std::string fen_string = "";
+#include "franka_msgs/SetPositionCommand.h"
+
+std::string fen_string = "8/5Pp1/p7/6K1/8/3B1Pkp/1r3R2/8 w - - 0 1";
 
 int main(int argc, char** argv){
     ros::init(argc, argv, "chessmate");
@@ -35,15 +40,16 @@ int main(int argc, char** argv){
     // ------------------------------------------------------------------------------------------
 
 
-    ros::ServiceClient vision_client = n.serviceClient<chessmate::QueryVisionComponent>("/franka_vision/query_component");
+    ros::ServiceClient vision_client = n.serviceClient<chessmate::QueryVisionComponent>("/franka_vision");
     chessmate::QueryVisionComponent vision_srv_request;
     vision_srv_request.request.last_state_fen_string = fen_string;
     while(!vision_client.call(vision_srv_request)){
         ROS_WARN_STREAM("Vision is not connected to system!");
         ros::Duration(1).sleep();
     }
+    ROS_INFO_STREAM("Vision is connected.");
+    //ROS_INFO_STREAM(vision_srv_request.response.success << " " << vision_srv_request.response.can_see_chessboard << " " << vision_srv_request.response.is_there_movement << " " << vision_srv_request.response.movement_in_fen);
     
-
     // ------------------------------------------------------------------------------------------
 
     // can be commented tomorrow
@@ -52,7 +58,7 @@ int main(int argc, char** argv){
     // or we can get into the source code of it, and open and close it with a service, I wrote it here
     // Another solution may be getting that necessary code from that node to here, but I think it will be more clear when we really use this code with robot
     // So I only left this suggestion here
-
+    /*
     ros::ServiceClient start_or_stop_franka_control_node_client = n.serviceClient<chessmate::franka_control_start_stop>("/franka_control_start_stop");
     chessmate::franka_control_start_stop franka_control_start;
     franka_control_start.request.start_or_stop = 0;
@@ -61,6 +67,7 @@ int main(int argc, char** argv){
         ros::Duration(1).sleep();
     }
     ROS_INFO_STREAM("Franka control is started. You can get robot information now.");
+    */
     // ------------------------------------------------------------------------------------------
 
     // First, do not give commands to external things.
@@ -77,8 +84,7 @@ int main(int argc, char** argv){
     // main control loop preparations
     // these commands come from our other packages
     // for now we can call them from CLI
-    ros::ServiceClient chess_next_move_client = n.serviceClient<chessmate::chess_next_move>("/chess_next_move");
-    chessmate::chess_next_move chess_move;
+
     ros::ServiceClient pick_and_place_client = n.serviceClient<chessmate::pick_and_place>("/pick_and_place");
     chessmate::pick_and_place pick_and_place;
 
@@ -92,19 +98,91 @@ int main(int argc, char** argv){
 
         // get chessboard info from vision system
         // commented until it is implemented!
-        std::string god_knows_where_this_comes_from;
-        vision_srv_request.request.last_state_fen_string = god_knows_where_this_comes_from;
+        std::string movement_in_fen = "";
+        vision_srv_request.request.last_state_fen_string = fen_string;
         auto resp = vision_client.call(vision_srv_request);
         if(!resp){
             ROS_WARN_STREAM("Vision is not connected to system!");
             ros::Duration(1).sleep();
         }
         else{
-            // I think this string is the new fen string, but I am really not sure, and I have really no idea what Burak's code does.
-            //TODOauto new_str = vision_srv_request.unkown_str;
-        
-            // TODOauto some_new_string_that_will_be_used_in_commands_or_new_fen_string = new_str;
+
+            if(!vision_srv_request.response.can_see_chessboard){
+                ROS_WARN_STREAM("Can not see chessboard!");
+                ros::Duration(1).sleep();
+                continue;
+            }
+            else{
+                ROS_INFO_STREAM("Chessboard found!");
+                if(!vision_srv_request.response.is_there_movement){
+                    ROS_WARN_STREAM("There is no movement!");
+                    ros::Duration(1).sleep();
+                    continue;
+                }
+                else{
+                    ROS_INFO_STREAM("There is movement!");
+                    // compare two strings
+                    if(vision_srv_request.response.movement_in_fen == ""){
+                        ROS_WARN_STREAM("It seems that there are 3 movements done!");
+                        ros::Duration(1).sleep();
+                        continue;
+                    }
+                    else{
+                        movement_in_fen = vision_srv_request.response.movement_in_fen;
+                    }
+                }
+            }
         }
+
+        // Vision passed all checks, now we can do something with it!
+        // Now, update fen string
+        ros::ServiceClient update_fen_client = n.serviceClient<chessmate::chess_opponent_move>("/chess_opponent_move");
+        chessmate::chess_opponent_move chess_opponent_move;
+        chess_opponent_move.request.move = movement_in_fen;
+        resp = update_fen_client.call(chess_opponent_move);
+        if(!resp){
+            ROS_WARN_STREAM("Call to stockfish failed!");
+            ros::Duration(0.01).sleep();
+            continue;
+        }
+        // If the call is successfull, take the new fen string, and get the next best move
+        fen_string = chess_opponent_move.response.fen_string;
+        ROS_INFO_STREAM("Fen string updated!");
+        ros::ServiceClient chess_next_move_client = n.serviceClient<chessmate::chess_next_move>("/chess_next_move");
+        chessmate::chess_next_move chess_next_move;
+        resp = chess_next_move_client.call(chess_next_move);
+        if(!resp){
+            ROS_WARN_STREAM("Call to stockfish failed!");
+            ros::Duration(0.01).sleep();
+            continue;
+        }
+        std::string take_place_square = chess_next_move.response.from_square;
+        std::string put_place_square  = chess_next_move.response.to_square;
+
+        // Now, we have the best move, and we can do something with it!
+        // Call the vision to get the coordinates of these!
+
+        ros::ServiceClient get_coordinates_client = n.serviceClient<chessmate::getPositionOfPieces>("/get_piece_coordinates");
+        chessmate::getPositionOfPieces get_coordinates_request;
+        ROS_INFO_STREAM("Take place is: " << take_place_square);
+        ROS_INFO_STREAM("Put place is: " << put_place_square);
+        get_coordinates_request.request.from_piece = take_place_square;
+        get_coordinates_request.request.to_piece = put_place_square;
+
+        resp = get_coordinates_client.call(get_coordinates_request);
+        if(!resp){
+            ROS_WARN_STREAM("Call to get coordinates failed!");
+            ros::Duration(0.01).sleep();
+            continue;
+        }
+        float from_x = get_coordinates_request.response.from_x;
+        float from_y = get_coordinates_request.response.from_y;
+        float to_x = get_coordinates_request.response.to_x;
+        float to_y = get_coordinates_request.response.to_y;
+        ROS_INFO_STREAM("From x: " << from_x << " From y: " << from_y << " To x: " << to_x << " To y: " << to_y << std::endl);
+
+        // Now, we have the coordinates of the pieces, we can do something with it!
+
         /*
 
         // send the chessboard info to stockfish
@@ -127,12 +205,13 @@ int main(int argc, char** argv){
         }
         else{
         */
+            /*
             chessmate::chessboard_to_coord chessboard_to_coord;
             chessboard_to_coord.request.take_place_x = chess_move.response.take_place_x;
             chessboard_to_coord.request.take_place_y = chess_move.response.take_place_y;
             chessboard_to_coord.request.put_place_x = chess_move.response.put_place_x;
             chessboard_to_coord.request.put_place_y = chess_move.response.put_place_y;
-            
+            */
             /*
             while(!find_coordinates_from_chessboard_client.call(chessboard_to_coord)){
                 ROS_WARN_STREAM("find coordinates from chessboard call unsuccessful!");

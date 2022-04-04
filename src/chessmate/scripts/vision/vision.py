@@ -8,7 +8,7 @@ from skimage.metrics import structural_similarity
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
 EMPTY_IMAGE_PATH = current_dir + "/empty_square_photos/"
-SQUARE_WIDTH = 4.1
+SQUARE_WIDTH = 0.041
 
 QUALITY_LEVEL = 0.15  # 0.05 for paper.
 MIN_DISTANCE = 10
@@ -18,10 +18,13 @@ USE_HARRIS_DETECTOR = False
 K = 0.04
 
 class Vision():
-    def __init__(self):
+    def __init__(self, top_left_x_coordinate, top_left_y_coordinate):
+        self.top_left_x_coordinate = top_left_x_coordinate
+        self.top_left_y_coordinate = top_left_y_coordinate
         self.square_information = np.ones((8, 8), dtype=str)
         self.empty_images_array = np.ones((8, 8), dtype=list)
         self.read_empty_images()
+        self.get_square_coordinates()
         self.initialize_realsense()
 
 
@@ -197,7 +200,7 @@ class Vision():
 
 
     def get_empty_full_information(self, board_image, square_width, square_height, x_pixel, y_pixel):
-        offset = 7
+        offset = 8
         for i in range(8):
             for j in range(8):
                 square_image = board_image[y_pixel + int(square_height) * i + offset: y_pixel + int(square_height) * (i + 1) - offset,
@@ -233,22 +236,25 @@ class Vision():
 
 
 
-    def get_square_coordinates(self,top_left_x_coordinate,top_left_y_coordinate):
+    def get_square_coordinates(self):
+        # coordinates["a8"] = [x, y]
+        # coordinates["f4"] = [x, y]
         coordinates = dict()
         for i in range(8):
-            y_coordinate = top_left_y_coordinate - SQUARE_WIDTH * i
-            x_coordinate = top_left_x_coordinate
+            x_coordinate = self.top_left_x_coordinate - SQUARE_WIDTH * i
+            y_coordinate = self.top_left_y_coordinate
             for j in range(8):
-                coordinate_list = list()
-                coordinate_list.append((x_coordinate,y_coordinate)) # Top left
-                coordinate_list.append((x_coordinate+ SQUARE_WIDTH, y_coordinate)) # Top right
-                coordinate_list.append((x_coordinate + SQUARE_WIDTH, y_coordinate - SQUARE_WIDTH)) # Bottom right
-                coordinate_list.append((x_coordinate, y_coordinate - SQUARE_WIDTH))  # Bottom left
+                coordinate_list = [x_coordinate,y_coordinate] 
                 coordinates[self.get_square_as_string(i,j)] = coordinate_list
-                x_coordinate += SQUARE_WIDTH
+                y_coordinate -= SQUARE_WIDTH
 
-        return coordinates
+        self.coordinates = coordinates
 
+    def get_piece_coordinates(self, from_square, to_square):
+        from_square_coordinates = self.coordinates[from_square]
+        to_square_coordinates = self.coordinates[to_square]
+
+        return from_square_coordinates, to_square_coordinates
 
 
     def get_movement(self,last_state_fen_string):
@@ -308,7 +314,7 @@ class Vision():
 
 if __name__ == '__main__':
     vision = Vision()
-
-    print(vision.get_movement('8/5Pp1/p7/6K1/8/3B1Pkp/1r3R2/8 w - - 0 1'))
+    print(vision.get_square_coordinates(0.5410416700640096,0.320580303627435))
+    #print(vision.get_movement('8/5Pp1/p7/6K1/8/3B1Pkp/1r3R2/8 w - - 0 1'))
 
 

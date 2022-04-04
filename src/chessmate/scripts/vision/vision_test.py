@@ -36,7 +36,7 @@ class Difference():
 
     def generate_empty_squares(self,board_image, square_width, square_height, x_pixel, y_pixel):
         print("Generated.")
-        offset = 7
+        offset = 8
         for i in range(8):
             for j in range(8):
                 empty_image = board_image[y_pixel + int(square_height) * i + offset: y_pixel + int(square_height) * (i + 1) - offset,
@@ -151,7 +151,7 @@ class Difference():
 
 
     def get_empty_full_information(self, board_image, square_width, square_height, x_pixel, y_pixel):
-        offset = 7 ## To increase sensitivity, reduce this. Ideally, value should be same with generating.
+        offset = 8 ## To increase sensitivity, reduce this. Ideally, value should be same with generating.
         for i in range(8):
             for j in range(8):
                 square_image = board_image[y_pixel + int(square_height) * i + offset: y_pixel + int(square_height) * (i + 1) - offset,
@@ -201,9 +201,9 @@ class Difference():
                 color_image = color_image[:, :500] # This could be change, we should crop gripper in the image.
 
                 square_width, square_height, x_pixel, y_pixel = self.find_corners(color_image)
-                self.get_empty_full_information(color_image, square_width, square_height, x_pixel, y_pixel)
-                #self.generate_empty_squares(color_image, square_width, square_height, x_pixel, y_pixel)
-
+                #self.get_empty_full_information(color_image, square_width, square_height, x_pixel, y_pixel)
+                self.generate_empty_squares(color_image, square_width, square_height, x_pixel, y_pixel)
+                
                 key = cv2.waitKey(1)
                 if key & 0xFF == ord('g'):
                     self.generate_empty_squares(color_image,square_width,square_height,x_pixel,y_pixel)
@@ -212,7 +212,7 @@ class Difference():
                 if key & 0xFF == ord('q') or key == 27:
                     cv2.destroyAllWindows()
                     break
-
+                
 
 
                 cv2.imshow('Image', color_image)
