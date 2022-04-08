@@ -18,9 +18,11 @@
 #include "chessmate/chess_next_move.h"
 #include "chessmate/getPositionOfPieces.h"
 
-#include "franka_msgs/SetPositionCommand.h"
 
-std::string fen_string = "8/5Pp1/p7/6K1/8/3B1Pkp/1r3R2/8 w - - 0 1";
+#include "franka_msgs/SetPositionCommand.h"
+#include "franka_gripper/GripperCommand.h"
+
+std::string fen_string = "8/8/8/3K3P/6k1/p6n/8/8 w - - 0 1";
 
 int main(int argc, char** argv){
     ros::init(argc, argv, "chessmate");
@@ -88,10 +90,29 @@ int main(int argc, char** argv){
     ros::ServiceClient pick_and_place_client = n.serviceClient<chessmate::pick_and_place>("/pick_and_place");
     chessmate::pick_and_place pick_and_place;
 
+    ros::ServiceClient go_client = n.serviceClient<franka_msgs::SetPositionCommand>("/franka_go");
+    franka_msgs::SetPositionCommand go_request; 
+
+    ros::ServiceClient gripper_client = n.serviceClient<franka_gripper::GripperCommand>("/franka_custom_gripper_service");
+    franka_gripper::GripperCommand gripper_request;
+
+
     ROS_INFO_STREAM("Main loop starting!");
 
     // main control starts here!
     while(true){
+
+        gripper_request.request.width = 0.01;
+        gripper_request.request.speed = 0.01;
+        gripper_request.request.force = 50;
+        gripper_request.request.want_to_pick = false;
+        gripper_request.request.want_to_move = true;
+        gripper_request.request.homing = false;
+        gripper_client.call(gripper_request);
+
+        ROS_INFO_STREAM("gripper successfull");
+
+       
         // check here if franka still on, however I do not know how to do this here TODO
 
         // error check and cleaning TODO
@@ -180,6 +201,141 @@ int main(int argc, char** argv){
         float to_x = get_coordinates_request.response.to_x;
         float to_y = get_coordinates_request.response.to_y;
         ROS_INFO_STREAM("From x: " << from_x << " From y: " << from_y << " To x: " << to_x << " To y: " << to_y << std::endl);
+        
+        int a;
+        std::cin >> a;
+        go_request.request.x = from_x;
+        go_request.request.y = from_y;
+        go_request.request.z = 0.4;
+        go_request.request.is_relative = false;
+        go_request.request.go_to_init = false;
+        resp = go_client.call(go_request);
+        if(!resp){
+            ROS_WARN_STREAM("Error in first go request");
+            ros::Duration(0.01).sleep();
+            continue;
+        }
+        ROS_INFO_STREAM("go successfull");
+        
+
+        std::cin >> a;
+        gripper_request.request.width = 0.04;
+        gripper_request.request.speed = 0.05;
+        gripper_request.request.force = 50;
+        gripper_request.request.want_to_pick = false;
+        gripper_request.request.want_to_move = true;
+        gripper_request.request.homing = false;
+        gripper_client.call(gripper_request);
+
+        ROS_INFO_STREAM("gripper successfull");
+
+        std::cin >> a;
+        go_request.request.x = from_x;
+        go_request.request.y = from_y;
+        go_request.request.z = 0.17;
+        go_request.request.is_relative = false;
+        go_request.request.go_to_init = false;
+        resp = go_client.call(go_request);
+        if(!resp){
+            ROS_WARN_STREAM("Error in sec go request");
+            ros::Duration(0.01).sleep();
+            continue;
+        }
+        ROS_INFO_STREAM("sec go successfull");
+
+
+        std::cin >> a;
+        gripper_request.request.width = 0.001;
+        gripper_request.request.speed = 0.05;
+        gripper_request.request.force = 50;
+        gripper_request.request.want_to_pick = true;
+        gripper_request.request.want_to_move = false;
+        gripper_request.request.homing = false;
+        gripper_client.call(gripper_request);
+
+        ROS_INFO_STREAM("sec gripper successfull");
+
+
+        std::cin >> a;
+        go_request.request.x = from_x;
+        go_request.request.y = from_y;
+        go_request.request.z = 0.40;
+        go_request.request.is_relative = false;
+        go_request.request.go_to_init = false;
+        resp = go_client.call(go_request);
+        if(!resp){
+            ROS_WARN_STREAM("Error in third go request");
+            ros::Duration(0.01).sleep();
+            continue;
+        }
+        ROS_INFO_STREAM("third go successfull");
+
+        std::cin >> a;
+
+        go_request.request.x = to_x;
+        go_request.request.y = to_y;
+        go_request.request.z = 0.40;
+        go_request.request.is_relative = false;
+        go_request.request.go_to_init = false;
+        resp = go_client.call(go_request);
+        if(!resp){
+            ROS_WARN_STREAM("Error in fourth go request");
+            ros::Duration(0.01).sleep();
+            continue;
+        }
+        ROS_INFO_STREAM("foourth go successfull");
+
+        std::cin >> a;
+
+        go_request.request.x = to_x;
+        go_request.request.y = to_y;
+        go_request.request.z = 0.17;
+        go_request.request.is_relative = false;
+        go_request.request.go_to_init = false;
+        resp = go_client.call(go_request);
+        if(!resp){
+            ROS_WARN_STREAM("Error in fifth go request");
+            ros::Duration(0.01).sleep();
+            continue;
+        }
+        ROS_INFO_STREAM("fifth go successfull");
+
+        std::cin >> a;
+        gripper_request.request.width = 0.05;
+        gripper_request.request.speed = 0.05;
+        gripper_request.request.force = 50;
+        gripper_request.request.want_to_pick = false;
+        gripper_request.request.want_to_move = true;
+        gripper_request.request.homing = false;
+        gripper_client.call(gripper_request);
+
+        ROS_INFO_STREAM(" gripper release  successfull");
+        std::cin >> a;
+
+        go_request.request.x = from_x;
+        go_request.request.y = from_y;
+        go_request.request.z = 0.4;
+        go_request.request.is_relative = false;
+        go_request.request.go_to_init = true;
+        resp = go_client.call(go_request);
+        if(!resp){
+            ROS_WARN_STREAM("Error in first go request");
+            ros::Duration(0.01).sleep();
+            continue;
+        }
+        ROS_INFO_STREAM("go to init successfull");
+        /*
+        if(!resp){
+            ROS_WARN_STREAM("Error in first gripper request");
+            ros::Duration(0.01).sleep();
+            continue;
+        }
+        */
+
+
+
+
+
 
         // Now, we have the coordinates of the pieces, we can do something with it!
 
