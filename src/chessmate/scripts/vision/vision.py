@@ -9,7 +9,7 @@ from stockfish import Stockfish
 
 
 #### STOCKFISH executable path ####
-STOCKFISH_PATH = "/home/burak/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64"
+STOCKFISH_PATH = "/home/alp/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64"
 
 
 # Get current directory
@@ -318,6 +318,8 @@ class Vision():
 
                 color_image = np.asanyarray(color_frame.get_data())
                 square_width, square_height, x_pixel, y_pixel = self.find_corners(color_image)
+                square_width, square_height, x_pixel, y_pixel = 45,46,198,52 ### OVERWRITING IT FOR NOW!!!
+    
 
 
                 ## Chessboard not properly detected.
@@ -334,7 +336,7 @@ class Vision():
                 if (last_state == self.square_information).all() :
                     return NO_DIFFERENCE_DETECTED, ""
 
-
+                print(self.square_information)
                 ## Movement detected.
                 number_of_differences, movement = self.decide_movement_with_comparing_states(last_state,self.square_information)
 
@@ -353,7 +355,8 @@ class Vision():
                 ## I will look at the number of moves that can be made from that position.
                 ## If number is one, I return that move, otherwise I return one difference detected.
                 elif number_of_differences == 1:
-                    valid_movements = self.get_possible_movements(last_state_fen_string,movement)
+                    valid_movements = self.get_possible_movements(last_state_fen_string,movement)   
+                    print(valid_movements)
                     if len(valid_movements) == 1:
                         return TWO_DIFFERENCE_DETECTED, valid_movements[0]
 
@@ -373,6 +376,6 @@ class Vision():
 
 if __name__ == '__main__':
     vision = Vision(0.5410416700640096,0.320580303627435)
-    print(vision.get_movement('8/K7/8/8/1kq4B/1r6/8/8 w - - 0 1'))
+    print(vision.get_movement('rnbqkbnr/ppppp1pp/8/5p2/4P3/8/PPPP1PPP/RNBQKBNR w - - 0 1'))
     #print(vision.get_movement('8/5Pp1/p7/6K1/8/3B1Pkp/1r3R2/8 w - - 0 1'))
 

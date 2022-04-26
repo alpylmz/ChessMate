@@ -111,6 +111,10 @@ class Difference():
         width = r_x - l_x
         height = l_y - u_y
 
+        l_x = int(l_x)
+        u_y = int(u_y)
+        width =  int(width)
+        height = int(height)
         cv2.rectangle(image, (l_x, u_y), (l_x + width, u_y + height), (255, 255, 255), 1)
 
 
@@ -170,6 +174,8 @@ class Difference():
                                 thickness=1
                                 )
                     self.square_information[i][j] = 'E'
+                    print(difference_score)
+
                 else:
                     cv2.putText(img=square_image,
                                 text="Full",
@@ -180,7 +186,7 @@ class Difference():
                                 thickness=1
                                 )
                     self.square_information[i][j] = 'F'
-                    print(difference_score)
+                    #print(difference_score)
 
 
 
@@ -199,15 +205,15 @@ class Difference():
 
                 color_image = np.asanyarray(color_frame.get_data())
                 square_width, square_height, x_pixel, y_pixel = self.find_corners(color_image)
-
-
+                print(square_width, square_height, x_pixel, y_pixel)
+                square_width, square_height, x_pixel, y_pixel = 45,46,198,52
                 # #
                 # if square_width < 20 or square_height < 20 or abs(square_width - square_height) > 5 :
                 #     continue
 
 
 
-                #self.get_empty_full_information(color_image, square_width, square_height, x_pixel, y_pixel)
+                self.get_empty_full_information(color_image, square_width, square_height, x_pixel, y_pixel)
                 self.generate_empty_squares(color_image, square_width, square_height, x_pixel, y_pixel)
 
 
