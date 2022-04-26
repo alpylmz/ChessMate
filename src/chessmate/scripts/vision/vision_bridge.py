@@ -16,8 +16,8 @@ if __name__ == "__main__":
 
     # queryvisioncomponent handler, executes vision_system.get_movement()
     def queryvisioncomponent_handler(req):
-        can_see_chessboard, is_there_movement, movement_in_fen = vision_system.get_movement(req.last_state_fen_string)
-        return QueryVisionComponentResponse(True, can_see_chessboard, is_there_movement, movement_in_fen)
+        return_code, movement_in_fen = vision_system.get_movement(req.last_state_fen_string)
+        return QueryVisionComponentResponse(return_code, movement_in_fen)
 
     def getPieceCoordinates(req):
         from_coords, to_coords = vision_system.get_piece_coordinates(req.from_piece, req.to_piece)
