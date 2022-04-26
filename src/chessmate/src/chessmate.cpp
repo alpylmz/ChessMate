@@ -247,23 +247,47 @@ int main(int argc, char** argv){
         // If it is full, then we will eat that piece and then do the movement. 
         bool is_put_place_full = is_square_full(fen_string,put_place_square);
 
-
-        // Update fen. Because we will play best move.
-        fen_string = chess_next_move.response.fen_string;
-
+        float pick_width = 0.0;
         if (is_put_place_full) {
-            // TODO , first eat piece.
+            // TODO , first take other player's piece.
+            char piece_to_take = get_piece_to_take(fen_string, put_place_square);
+            
+            ROS_WARN_STREAM("YOU ARE TRYING TO TAKE A PIECE BUT IT IS NOT IMPLEMENTED!");
+            continue;
         }
         // Otherwise, move the piece to the put place square.
         
+        char piece_to_take = get_piece_to_take(fen_string, take_place_square);
+        switch(piece_to_take){
+            case 'q':
+            case ('Q'):{
+                ROS_INFO_STREAM("We will take a queen.");
+                pick_width = 0.01;
+                break;
+            }
+            case('k'):
+            case ('K'):{
+                ROS_INFO_STREAM("We will take a king.");
+                pick_width = 0.01;
+                break;
+            }
+            default:{
+                ROS_INFO_STREAM("We will take others.");
+                pick_width = 0.004;
+                break;
+            }
+        }
 
+        // Update fen. Because we will play best move.
+        fen_string = chess_next_move.response.fen_string;
+        
         // Now, we have the best move, and we can do something with it!
         // Call the vision to get the coordinates of these!
-
-        
         
         ros::ServiceClient joint_client = n.serviceClient<franka_msgs::SetChessGoal>("/franka_go_chess");
         franka_msgs::SetChessGoal joint_request;
+        
+        // go to above of take piece 
         joint_request.request.chess_place = take_place_square + "above";
         ROS_INFO_STREAM("Starting movement!");
         int a;
@@ -276,7 +300,7 @@ int main(int argc, char** argv){
         }
         ROS_INFO_STREAM("go successfull");
         
-
+        // prepare gripper
         std::cin >> a;
         gripper_request.request.width = 0.04;
         gripper_request.request.speed = 0.05;
@@ -288,6 +312,7 @@ int main(int argc, char** argv){
 
         ROS_INFO_STREAM("gripper successfull");
 
+        // go to take piece
         std::cin >> a;
         joint_request.request.chess_place = take_place_square;
         resp = joint_client.call(joint_request);
@@ -298,9 +323,9 @@ int main(int argc, char** argv){
         }
         ROS_INFO_STREAM("sec go successfull");
 
-
+        // pick piece
         std::cin >> a;
-        gripper_request.request.width = 0.001;
+        gripper_request.request.width = pick_width;
         gripper_request.request.speed = 0.05;
         gripper_request.request.force = 50;
         gripper_request.request.want_to_pick = true;
@@ -319,14 +344,10 @@ int main(int argc, char** argv){
             continue;
         }
 
-        // GO TO INIT
+        // GO TO INTER
         std::cin >> a;
-        go_request.request.x = 0;
-        go_request.request.y = 0;
-        go_request.request.z = 0.40;
-        go_request.request.is_relative = false;
-        go_request.request.go_to_init = true;
-        resp = go_client.call(go_request);
+        joint_request.request.chess_place = "inter";
+        resp = joint_client.call(joint_request);
         if(!resp){
             ROS_WARN_STREAM("Error in third go request");
             ros::Duration(0.01).sleep();
