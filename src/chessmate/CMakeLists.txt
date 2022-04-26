@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(chessmate)
 
 ## Find catkin and any catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg franka_msgs)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg franka_msgs franka_gripper)
 
 ## Declare ROS messages and services
 add_message_files(

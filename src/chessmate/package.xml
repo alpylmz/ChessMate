@@ -55,7 +55,10 @@
   <build_export_depend>rospy</build_export_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
-  <depend>franka_msgs</depend>
+  <build_depend>franka_msgs</build_depend>
+  <exec_depend>franka_msgs</exec_depend>
+  <build_depend>franka_gripper</build_depend>
+  <exec_depend>franka_gripper</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
