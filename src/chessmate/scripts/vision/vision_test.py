@@ -1,14 +1,15 @@
 import cv2
 import pyrealsense2 as real_sense
 import numpy as np
-import copy
-from skimage.metrics import structural_similarity
 import os
+from skimage.metrics import structural_similarity
+
+
 
 # get current directory
 current_dir = os.path.dirname(os.path.realpath(__file__))
+EMPTY_IMAGE_PATH = current_dir + "/monopol-square-photos/"
 
-EMPTY_IMAGE_PATH = current_dir + "/empty_square_photos/"
 
 
 class Difference():
@@ -36,7 +37,7 @@ class Difference():
 
     def generate_empty_squares(self,board_image, square_width, square_height, x_pixel, y_pixel):
         print("Generated.")
-        offset = 8
+        offset = 7
         for i in range(8):
             for j in range(8):
                 empty_image = board_image[y_pixel + int(square_height) * i + offset: y_pixel + int(square_height) * (i + 1) - offset,
@@ -62,7 +63,6 @@ class Difference():
         corners = cv2.goodFeaturesToTrack(gray_image, 300, qualityLevel, minDistance, None, blockSize=blockSize,
                                           gradientSize=gradientSize, useHarrisDetector=useHarrisDetector, k=k)
         radius = 4
-
 
         right_most = 0
         r_x, r_y = 0, 0
@@ -111,22 +111,20 @@ class Difference():
         width = r_x - l_x
         height = l_y - u_y
 
-
-        l_x = int(l_x)
-        u_y = int(u_y)
-        width = int(width)
-        height = int(height)
-
         cv2.rectangle(image, (l_x, u_y), (l_x + width, u_y + height), (255, 255, 255), 1)
 
-        height_offset = 20
-        width_offset = 20
-        height = height - height_offset * 2
-        width = width - width_offset * 2
+
+        upper_height_offset = 12   # 12,10,13,12 monopol, 20, 12,20,20 kağıt. 25,22,16,15 star-oyun
+        below_height_offset = 10    # 25,20,23,25 prestij
+        left_width_offset = 13     # 25,20,25,20 sister - set.
+        right_width_offset = 12
+
+        height = height - (upper_height_offset + below_height_offset)
+        width = width - (left_width_offset + right_width_offset)
         square_width = width / 8
         square_height = height / 8
-        l_x = l_x + width_offset
-        u_y = u_y + height_offset
+        l_x = l_x + left_width_offset
+        u_y = u_y + upper_height_offset
 
         return int(square_width), int(square_height), int(l_x), int(u_y)
 
@@ -151,7 +149,7 @@ class Difference():
 
 
     def get_empty_full_information(self, board_image, square_width, square_height, x_pixel, y_pixel):
-        offset = 8 ## To increase sensitivity, reduce this. Ideally, value should be same with generating.
+        offset = 7 ## To increase sensitivity, reduce this. Ideally, value should be same with generating.
         for i in range(8):
             for j in range(8):
                 square_image = board_image[y_pixel + int(square_height) * i + offset: y_pixel + int(square_height) * (i + 1) - offset,
@@ -160,7 +158,9 @@ class Difference():
                 resized_square_image = cv2.resize(square_image,(self.empty_images_array[i][j].shape[1],self.empty_images_array[i][j].shape[0]),interpolation=cv2.INTER_AREA)
                 difference_score = self.get_similarity_score(resized_square_image,self.empty_images_array[i][j])
 
-                if difference_score > 0.80:
+
+
+                if difference_score > 0.90:
                     cv2.putText(img=square_image,
                                 text="Empty",
                                 org=(0,0),
@@ -198,12 +198,19 @@ class Difference():
 
 
                 color_image = np.asanyarray(color_frame.get_data())
-                color_image = color_image[:, :500] # This could be change, we should crop gripper in the image.
-
                 square_width, square_height, x_pixel, y_pixel = self.find_corners(color_image)
+
+
+                # #
+                # if square_width < 20 or square_height < 20 or abs(square_width - square_height) > 5 :
+                #     continue
+
+
+
                 #self.get_empty_full_information(color_image, square_width, square_height, x_pixel, y_pixel)
                 self.generate_empty_squares(color_image, square_width, square_height, x_pixel, y_pixel)
-                
+
+
                 key = cv2.waitKey(1)
                 if key & 0xFF == ord('g'):
                     self.generate_empty_squares(color_image,square_width,square_height,x_pixel,y_pixel)
@@ -212,8 +219,6 @@ class Difference():
                 if key & 0xFF == ord('q') or key == 27:
                     cv2.destroyAllWindows()
                     break
-                
-
 
                 cv2.imshow('Image', color_image)
 
@@ -227,3 +232,5 @@ class Difference():
 if __name__ == "__main__":
     detect_differences = Difference()
     detect_differences.start()
+
+
