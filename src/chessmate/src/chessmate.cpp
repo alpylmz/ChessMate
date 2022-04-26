@@ -1,7 +1,9 @@
 #include <ros/ros.h>
+#include <iostream>
 #include <string>
 
 #include "chessmate/helper.hpp"
+#include "chessmate_helpers.h"
 
 // messages
 #include "chessmate/pose.h"
@@ -22,7 +24,18 @@
 #include "franka_msgs/SetPositionCommand.h"
 #include "franka_gripper/GripperCommand.h"
 
-std::string fen_string = "8/8/8/3K3P/6k1/p6n/8/8 w - - 0 1";
+std::string fen_string = "1k4N1/8/8/2p1K3/B7/3Pb2N/8/2r5 w - - 0 1";
+
+/* Vision function return codes */
+int CHESSBOARD_NOT_DETECTED=0;
+int NO_DIFFERENCE_DETECTED=2000;
+int ONE_DIFFERENCE_DETECTED=4000;
+int TWO_DIFFERENCE_DETECTED=3000;
+int MORE_THAN_TWO_DIFFERENCE_DETECTED=5000;
+int EXCEPTION_IN_THE_VISION_LOOP=6000;
+
+
+
 
 int main(int argc, char** argv){
     ros::init(argc, argv, "chessmate");
@@ -72,16 +85,14 @@ int main(int argc, char** argv){
     */
     // ------------------------------------------------------------------------------------------
 
+
     // First, do not give commands to external things.
     PandaJoints neutral_pose;
+
+
     // assign the robot to neutral pose, or save it here and give it!
     float joint0_start = neutral_pose.joint0;
 
-    //searchChessboard();    
-
-    ROS_INFO_STREAM("Chessboard found!");
-    
-    // from here, neutral pose is the pose that looks to the chessboard, will be used later!!!!
 
     // main control loop preparations
     // these commands come from our other packages
@@ -101,6 +112,10 @@ int main(int argc, char** argv){
 
     // main control starts here!
     while(true){
+
+        ROS_INFO_STREAM("Wait for opponent move.");
+        int a;
+        std::cin >> a;    
 
         gripper_request.request.width = 0.01;
         gripper_request.request.speed = 0.01;
@@ -122,38 +137,63 @@ int main(int argc, char** argv){
         std::string movement_in_fen = "";
         vision_srv_request.request.last_state_fen_string = fen_string;
         auto resp = vision_client.call(vision_srv_request);
+
         if(!resp){
             ROS_WARN_STREAM("Vision is not connected to system!");
             ros::Duration(1).sleep();
         }
         else{
+            
+            int return_code = vision_srv_request.response.return_code;
+            
 
-            if(!vision_srv_request.response.can_see_chessboard){
-                ROS_WARN_STREAM("Can not see chessboard!");
-                ros::Duration(1).sleep();
-                continue;
-            }
-            else{
-                ROS_INFO_STREAM("Chessboard found!");
-                if(!vision_srv_request.response.is_there_movement){
-                    ROS_WARN_STREAM("There is no movement!");
+            switch (return_code) {
+                case CHESSBOARD_NOT_DETECTED:
+                    ROS_WARN_STREAM("Can not see chessboard!");
                     ros::Duration(1).sleep();
-                    continue;
-                }
-                else{
-                    ROS_INFO_STREAM("There is movement!");
-                    // compare two strings
-                    if(vision_srv_request.response.movement_in_fen == ""){
-                        ROS_WARN_STREAM("It seems that there are 3 movements done!");
-                        ros::Duration(1).sleep();
-                        continue;
-                    }
-                    else{
-                        movement_in_fen = vision_srv_request.response.movement_in_fen;
-                    }
-                }
-            }
+                    
+
+                case NO_DIFFERENCE_DETECTED:
+                    ROS_WARN_STREAM("No difference detected.");
+                    ros::Duration(1).sleep();
+                    
+
+
+                case ONE_DIFFERENCE_DETECTED:
+                    ROS_WARN_STREAM("One difference detected.");
+                    ros::Duration(1).sleep();
+
+
+                case TWO_DIFFERENCE_DETECTED:
+                    movement_in_fen = vision_srv_request.response.movement_in_fen;
+                    std::cout << "Detected movement is : " << movement_in_fen << std::endl;
+                    
+
+                case MORE_THAN_TWO_DIFFERENCE_DETECTED:
+                    ROS_WARN_STREAM("More than two difference detected.");
+                    ros::Duration(1).sleep();
+                    
+
+
+                case EXCEPTION_IN_THE_VISION_LOOP:
+                    ROS_WARN_STREAM("Exception in the vision loop.");
+                    ros::Duration(1).sleep();
+                    
+
+
+                default:
+                    ROS_WARN_STREAM("Default in the switch statement. We should not be here.");
+                    ros::Duration(1).sleep();
+                    
         }
+
+
+        if (movement_in_fen == "") {
+            ROS_WARN_STREAM("Could not track movement. We have to enter it manually.");
+            std::cin >> movement_in_fen;
+            std::cout << movement_in_fen << " movement has been done by the opponent." << std::endl;   
+        }
+
 
         // Vision passed all checks, now we can do something with it!
         // Now, update fen string
@@ -166,9 +206,12 @@ int main(int argc, char** argv){
             ros::Duration(0.01).sleep();
             continue;
         }
+
         // If the call is successfull, take the new fen string, and get the next best move
         fen_string = chess_opponent_move.response.fen_string;
         ROS_INFO_STREAM("Fen string updated!");
+
+
         ros::ServiceClient chess_next_move_client = n.serviceClient<chessmate::chess_next_move>("/chess_next_move");
         chessmate::chess_next_move chess_next_move;
         resp = chess_next_move_client.call(chess_next_move);
@@ -177,8 +220,28 @@ int main(int argc, char** argv){
             ros::Duration(0.01).sleep();
             continue;
         }
+
+
+
         std::string take_place_square = chess_next_move.response.from_square;
         std::string put_place_square  = chess_next_move.response.to_square;
+
+        // First, we need to look at put place square.
+        // If it is full, then we will eat that piece and then do the movement. 
+        bool is_put_place_full = is_square_full(fen_string,put_place_square);
+
+
+        // Update fen. Because we will play best move.
+        fen_string = chess_next_move.response.fen_string;
+
+        if (is_put_place_full) {
+            // TODO , first eat piece.
+        }
+
+        else {
+            // We can directly put piece, no eat.
+        }
+
 
         // Now, we have the best move, and we can do something with it!
         // Call the vision to get the coordinates of these!
