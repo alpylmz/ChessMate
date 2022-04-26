@@ -1,4 +1,4 @@
 string last_state_fen_string
 ---
-int8 return_code
+int32 return_code
 string movement_in_fen
