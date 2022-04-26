@@ -3,3 +3,4 @@
 int8 is_state_valid
 string from_square
 string to_square
+string fen_string
