@@ -22,17 +22,18 @@
 
 
 #include "franka_msgs/SetPositionCommand.h"
+#include "franka_msgs/SetChessGoal.h"
 #include "franka_gripper/GripperCommand.h"
 
-std::string fen_string = "1k4N1/8/8/2p1K3/B7/3Pb2N/8/2r5 w - - 0 1";
+std::string fen_string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b - - 0 1";
 
 /* Vision function return codes */
-int CHESSBOARD_NOT_DETECTED=0;
-int NO_DIFFERENCE_DETECTED=2000;
-int ONE_DIFFERENCE_DETECTED=4000;
-int TWO_DIFFERENCE_DETECTED=3000;
-int MORE_THAN_TWO_DIFFERENCE_DETECTED=5000;
-int EXCEPTION_IN_THE_VISION_LOOP=6000;
+const int CHESSBOARD_NOT_DETECTED=0;
+const int NO_DIFFERENCE_DETECTED=2000;
+const int ONE_DIFFERENCE_DETECTED=4000;
+const int TWO_DIFFERENCE_DETECTED=3000;
+const int MORE_THAN_TWO_DIFFERENCE_DETECTED=5000;
+const int EXCEPTION_IN_THE_VISION_LOOP=6000;
 
 
 
@@ -112,31 +113,49 @@ int main(int argc, char** argv){
 
     // main control starts here!
     while(true){
-
-        ROS_INFO_STREAM("Wait for opponent move.");
+        ROS_INFO_STREAM("Main loop starts!");
         int a;
         std::cin >> a;    
 
-        gripper_request.request.width = 0.01;
-        gripper_request.request.speed = 0.01;
+        gripper_request.request.width = 0.0;
+        gripper_request.request.speed = 0.04;
         gripper_request.request.force = 50;
         gripper_request.request.want_to_pick = false;
         gripper_request.request.want_to_move = true;
         gripper_request.request.homing = false;
         gripper_client.call(gripper_request);
 
+        ROS_INFO_STREAM("input until gripper");
+        std::cin >> a;
         ROS_INFO_STREAM("gripper successfull");
 
        
         // check here if franka still on, however I do not know how to do this here TODO
 
         // error check and cleaning TODO
+        bool resp;
+        std::cin >> a;
+        go_request.request.x = 0;
+        go_request.request.y = 0;
+        go_request.request.z = 0.40;
+        go_request.request.is_relative = false;
+        go_request.request.go_to_init = true;
+        resp = go_client.call(go_request);
+        if(!resp){
+            ROS_WARN_STREAM("Error in zeroth go request go to init");
+            ros::Duration(0.01).sleep();
+            continue;
+        }
+        ROS_INFO_STREAM("init go successfull");
 
+
+        ROS_INFO_STREAM("Wait for opponent move.");
+        std::cin >> a;
         // get chessboard info from vision system
         // commented until it is implemented!
         std::string movement_in_fen = "";
         vision_srv_request.request.last_state_fen_string = fen_string;
-        auto resp = vision_client.call(vision_srv_request);
+        resp = vision_client.call(vision_srv_request);
 
         if(!resp){
             ROS_WARN_STREAM("Vision is not connected to system!");
@@ -151,36 +170,28 @@ int main(int argc, char** argv){
                 case CHESSBOARD_NOT_DETECTED:
                     ROS_WARN_STREAM("Can not see chessboard!");
                     ros::Duration(1).sleep();
-                    
-
+                    break;
                 case NO_DIFFERENCE_DETECTED:
                     ROS_WARN_STREAM("No difference detected.");
                     ros::Duration(1).sleep();
-                    
-
-
+                    break;
                 case ONE_DIFFERENCE_DETECTED:
                     ROS_WARN_STREAM("One difference detected.");
                     ros::Duration(1).sleep();
-
-
+                    break;
                 case TWO_DIFFERENCE_DETECTED:
                     movement_in_fen = vision_srv_request.response.movement_in_fen;
                     std::cout << "Detected movement is : " << movement_in_fen << std::endl;
-                    
-
+                    break;
                 case MORE_THAN_TWO_DIFFERENCE_DETECTED:
                     ROS_WARN_STREAM("More than two difference detected.");
                     ros::Duration(1).sleep();
-                    
-
+                    break;
 
                 case EXCEPTION_IN_THE_VISION_LOOP:
                     ROS_WARN_STREAM("Exception in the vision loop.");
                     ros::Duration(1).sleep();
-                    
-
-
+                    break;
                 default:
                     ROS_WARN_STREAM("Default in the switch statement. We should not be here.");
                     ros::Duration(1).sleep();
@@ -190,7 +201,13 @@ int main(int argc, char** argv){
 
         if (movement_in_fen == "") {
             ROS_WARN_STREAM("Could not track movement. We have to enter it manually.");
+            ROS_WARN_STREAM("If you want to enter it manually, please enter it now. Otherwise, enter 0.");
             std::cin >> movement_in_fen;
+            if (movement_in_fen == "0") {
+                ROS_WARN_STREAM("We will not enter it manually.");
+                ros::Duration(1).sleep();
+                continue;
+            }
             std::cout << movement_in_fen << " movement has been done by the opponent." << std::endl;   
         }
 
@@ -237,42 +254,21 @@ int main(int argc, char** argv){
         if (is_put_place_full) {
             // TODO , first eat piece.
         }
-
-        else {
-            // We can directly put piece, no eat.
-        }
-
+        // Otherwise, move the piece to the put place square.
+        
 
         // Now, we have the best move, and we can do something with it!
         // Call the vision to get the coordinates of these!
 
-        ros::ServiceClient get_coordinates_client = n.serviceClient<chessmate::getPositionOfPieces>("/get_piece_coordinates");
-        chessmate::getPositionOfPieces get_coordinates_request;
-        ROS_INFO_STREAM("Take place is: " << take_place_square);
-        ROS_INFO_STREAM("Put place is: " << put_place_square);
-        get_coordinates_request.request.from_piece = take_place_square;
-        get_coordinates_request.request.to_piece = put_place_square;
-
-        resp = get_coordinates_client.call(get_coordinates_request);
-        if(!resp){
-            ROS_WARN_STREAM("Call to get coordinates failed!");
-            ros::Duration(0.01).sleep();
-            continue;
-        }
-        float from_x = get_coordinates_request.response.from_x;
-        float from_y = get_coordinates_request.response.from_y;
-        float to_x = get_coordinates_request.response.to_x;
-        float to_y = get_coordinates_request.response.to_y;
-        ROS_INFO_STREAM("From x: " << from_x << " From y: " << from_y << " To x: " << to_x << " To y: " << to_y << std::endl);
         
+        
+        ros::ServiceClient joint_client = n.serviceClient<franka_msgs::SetChessGoal>("/franka_go_chess");
+        franka_msgs::SetChessGoal joint_request;
+        joint_request.request.chess_place = take_place_square + "above";
+        ROS_INFO_STREAM("Starting movement!");
         int a;
         std::cin >> a;
-        go_request.request.x = from_x;
-        go_request.request.y = from_y;
-        go_request.request.z = 0.4;
-        go_request.request.is_relative = false;
-        go_request.request.go_to_init = false;
-        resp = go_client.call(go_request);
+        resp = joint_client.call(joint_request);
         if(!resp){
             ROS_WARN_STREAM("Error in first go request");
             ros::Duration(0.01).sleep();
@@ -293,12 +289,8 @@ int main(int argc, char** argv){
         ROS_INFO_STREAM("gripper successfull");
 
         std::cin >> a;
-        go_request.request.x = from_x;
-        go_request.request.y = from_y;
-        go_request.request.z = 0.17;
-        go_request.request.is_relative = false;
-        go_request.request.go_to_init = false;
-        resp = go_client.call(go_request);
+        joint_request.request.chess_place = take_place_square;
+        resp = joint_client.call(joint_request);
         if(!resp){
             ROS_WARN_STREAM("Error in sec go request");
             ros::Duration(0.01).sleep();
@@ -318,13 +310,22 @@ int main(int argc, char** argv){
 
         ROS_INFO_STREAM("sec gripper successfull");
 
-
         std::cin >> a;
-        go_request.request.x = from_x;
-        go_request.request.y = from_y;
+        joint_request.request.chess_place = take_place_square + "above";
+        resp = joint_client.call(joint_request);
+        if(!resp){
+            ROS_WARN_STREAM("Error in thirdy go request");
+            ros::Duration(0.01).sleep();
+            continue;
+        }
+
+        // GO TO INIT
+        std::cin >> a;
+        go_request.request.x = 0;
+        go_request.request.y = 0;
         go_request.request.z = 0.40;
         go_request.request.is_relative = false;
-        go_request.request.go_to_init = false;
+        go_request.request.go_to_init = true;
         resp = go_client.call(go_request);
         if(!resp){
             ROS_WARN_STREAM("Error in third go request");
@@ -333,14 +334,10 @@ int main(int argc, char** argv){
         }
         ROS_INFO_STREAM("third go successfull");
 
-        std::cin >> a;
 
-        go_request.request.x = to_x;
-        go_request.request.y = to_y;
-        go_request.request.z = 0.40;
-        go_request.request.is_relative = false;
-        go_request.request.go_to_init = false;
-        resp = go_client.call(go_request);
+        std::cin >> a;
+        joint_request.request.chess_place = put_place_square + "above";
+        resp = joint_client.call(joint_request);
         if(!resp){
             ROS_WARN_STREAM("Error in fourth go request");
             ros::Duration(0.01).sleep();
@@ -348,14 +345,10 @@ int main(int argc, char** argv){
         }
         ROS_INFO_STREAM("foourth go successfull");
 
+        
         std::cin >> a;
-
-        go_request.request.x = to_x;
-        go_request.request.y = to_y;
-        go_request.request.z = 0.17;
-        go_request.request.is_relative = false;
-        go_request.request.go_to_init = false;
-        resp = go_client.call(go_request);
+        joint_request.request.chess_place = put_place_square;
+        resp = joint_client.call(joint_request);
         if(!resp){
             ROS_WARN_STREAM("Error in fifth go request");
             ros::Duration(0.01).sleep();
@@ -375,14 +368,14 @@ int main(int argc, char** argv){
         ROS_INFO_STREAM(" gripper release  successfull");
         std::cin >> a;
 
-        go_request.request.x = from_x;
-        go_request.request.y = from_y;
+        go_request.request.x = 0;
+        go_request.request.y = 0;
         go_request.request.z = 0.4;
         go_request.request.is_relative = false;
         go_request.request.go_to_init = true;
         resp = go_client.call(go_request);
         if(!resp){
-            ROS_WARN_STREAM("Error in first go request");
+            ROS_WARN_STREAM("Error in last go request go to init");
             ros::Duration(0.01).sleep();
             continue;
         }
@@ -456,6 +449,7 @@ int main(int argc, char** argv){
         // However, I am not sure which way is the best since we did not implement these parts.
         // So I left it here...
     }
+}
 
 
 }
