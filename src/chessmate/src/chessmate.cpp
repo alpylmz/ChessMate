@@ -34,57 +34,34 @@ const int ONE_DIFFERENCE_DETECTED=4000;
 const int TWO_DIFFERENCE_DETECTED=3000;
 const int MORE_THAN_TWO_DIFFERENCE_DETECTED=5000;
 const int EXCEPTION_IN_THE_VISION_LOOP=6000;
-
-
+const int SIDE_VISION_SUCCESS=7000;
+const int SIDE_VISION_UNSUCCESS=8000;
+const int GO_LEFT=9000;
+const int GO_RIGHT=10000;
+const int GO_UP=11000;
+const int GO_DOWN=12000;
+const int FACE_ALIGNED=13000;
+const int FACE_NOT_DETECTED=14000;
+const int HAPPY_FACE=15000;
+const int UNHAPPY_FACE=16000;
+const int NEUTRAL_FACE=17000;
 
 
 int main(int argc, char** argv){
     ros::init(argc, argv, "chessmate");
     ros::NodeHandle n;
-    /*
-    // can be commented tomorrow
-    // ------------------------------------------------------------------------------------------
-    // checks if the system is open, with "/franka_on" service!
-    ros::ServiceClient robot_on_client = n.serviceClient<chessmate::franka_on>("/franka_on");
-    chessmate::franka_on franka_is_on_client;
-    while(!robot_on_client.call(franka_is_on_client)){
-        ROS_WARN_STREAM("Franka is not connected to system!");
-        ros::Duration(1).sleep();
-    }
-    ROS_INFO_STREAM("Franka is connected.");
-    */
-    // ------------------------------------------------------------------------------------------
 
 
+    // Test vision is connected or not.
     ros::ServiceClient vision_client = n.serviceClient<chessmate::QueryVisionComponent>("/franka_vision");
     chessmate::QueryVisionComponent vision_srv_request;
+    vision_srv_request.request.query_type = "test";
     vision_srv_request.request.last_state_fen_string = fen_string;
     while(!vision_client.call(vision_srv_request)){
         ROS_WARN_STREAM("Vision is not connected to system!");
         ros::Duration(1).sleep();
     }
     ROS_INFO_STREAM("Vision is connected.");
-    //ROS_INFO_STREAM(vision_srv_request.response.success << " " << vision_srv_request.response.can_see_chessboard << " " << vision_srv_request.response.is_there_movement << " " << vision_srv_request.response.movement_in_fen);
-    
-    // ------------------------------------------------------------------------------------------
-
-    // can be commented tomorrow
-    // ------------------------------------------------------------------------------------------
-    // Here franka_control package's franka_control node should be started
-    // or we can get into the source code of it, and open and close it with a service, I wrote it here
-    // Another solution may be getting that necessary code from that node to here, but I think it will be more clear when we really use this code with robot
-    // So I only left this suggestion here
-    /*
-    ros::ServiceClient start_or_stop_franka_control_node_client = n.serviceClient<chessmate::franka_control_start_stop>("/franka_control_start_stop");
-    chessmate::franka_control_start_stop franka_control_start;
-    franka_control_start.request.start_or_stop = 0;
-    while(!start_or_stop_franka_control_node_client.call(franka_control_start)){
-        ROS_WARN_STREAM("Franka control node cannot be started.");
-        ros::Duration(1).sleep();
-    }
-    ROS_INFO_STREAM("Franka control is started. You can get robot information now.");
-    */
-    // ------------------------------------------------------------------------------------------
 
 
     // First, do not give commands to external things.
@@ -111,6 +88,7 @@ int main(int argc, char** argv){
 
     ROS_INFO_STREAM("Main loop starting!");
 
+
     // main control starts here!
     while(true){
         ROS_INFO_STREAM("Main loop starts!");
@@ -133,6 +111,8 @@ int main(int argc, char** argv){
         // check here if franka still on, however I do not know how to do this here TODO
 
         // error check and cleaning TODO
+
+        // Init should be updated as side vision place.
         bool resp;
         std::cin >> a;
         go_request.request.x = 0;
@@ -149,20 +129,51 @@ int main(int argc, char** argv){
         ROS_INFO_STREAM("init go successfull");
 
 
+
         ROS_INFO_STREAM("Wait for opponent move.");
         std::cin >> a;
-        // get chessboard info from vision system
-        // commented until it is implemented!
+
+
+
         std::string movement_in_fen = "";
         vision_srv_request.request.last_state_fen_string = fen_string;
+        vision_srv_request.request.query_type = "side";
         resp = vision_client.call(vision_srv_request);
+
 
         if(!resp){
             ROS_WARN_STREAM("Vision is not connected to system!");
             ros::Duration(1).sleep();
-        }
-        else{
+        } else{
             
+            int return_code = vision_srv_request.response.return_code;
+
+
+            switch (return_code) {
+                case SIDE_VISION_SUCCESS:
+                    ROS_WARN_STREAM("Side vision is successfull.");
+                    movement_in_fen = vision_srv_request.response.movement_in_fen;
+                    std::cout << "Detected movement is : " << movement_in_fen << std::endl;
+                    break;
+                case SIDE_VISION_UNSUCCESS:
+                    ROS_WARN_STREAM("Side vision is unsuccessfull.");
+                    ros::Duration(1).sleep();
+                    break;
+                default:
+                    ROS_WARN_STREAM("Default in the switch statement. We should not be here.");
+                    ros::Duration(1).sleep();
+        }
+
+
+        if (movement_in_fen == "") {
+            /*
+                Here, we need to go top view to get the prediction from top view.
+            */
+
+
+            vision_srv_request.request.last_state_fen_string = fen_string;
+            vision_srv_request.request.query_type = "top";
+            resp = vision_client.call(vision_srv_request);
             int return_code = vision_srv_request.response.return_code;
             
 
@@ -196,6 +207,8 @@ int main(int argc, char** argv){
                     ROS_WARN_STREAM("Default in the switch statement. We should not be here.");
                     ros::Duration(1).sleep();
                     
+        
+            }
         }
 
 
@@ -224,9 +237,22 @@ int main(int argc, char** argv){
             continue;
         }
 
-        // If the call is successfull, take the new fen string, and get the next best move
-        fen_string = chess_opponent_move.response.fen_string;
-        ROS_INFO_STREAM("Fen string updated!");
+        // If player cheats, do something.
+        if (chess_opponent_move.response.fen_string == "cheat") {
+            ROS_INFO_STREAM("Cheat detected. HRI do angry movement.");
+            // HRI will do something here.
+        }
+
+        else if (chess_opponent_move.response.game_state == "lose") {
+            ROS_INFO_STREAM("We lost the game. HRI do sad movement.");
+            // HRI will do something here.
+        }
+
+        // If movement is valid, continue..
+        else {
+            fen_string = chess_opponent_move.response.fen_string;
+            ROS_INFO_STREAM("Fen string updated!");
+        }
 
 
         ros::ServiceClient chess_next_move_client = n.serviceClient<chessmate::chess_next_move>("/chess_next_move");
@@ -389,6 +415,11 @@ int main(int argc, char** argv){
         ROS_INFO_STREAM(" gripper release  successfull");
         std::cin >> a;
 
+
+        /*
+            Here, we need to go side vision place instead of init.
+            Side vision will take photo and update previous image.
+        */
         go_request.request.x = 0;
         go_request.request.y = 0;
         go_request.request.z = 0.4;
@@ -400,71 +431,29 @@ int main(int argc, char** argv){
             ros::Duration(0.01).sleep();
             continue;
         }
-        ROS_INFO_STREAM("go to init successfull");
-        /*
-        if(!resp){
-            ROS_WARN_STREAM("Error in first gripper request");
-            ros::Duration(0.01).sleep();
-            continue;
+        ROS_INFO_STREAM("go to init successfull"); // Should be side vision place. Will be determined.
+
+
+
+        // Firstly, check whether we won the game or not.
+        if (chess_next_move.response.game_state == "win") {
+            ROS_INFO_STREAM("We won the game. HRI do happy movement.");
+            // HRI will do something here.
         }
-        */
 
 
+        // If we did not win, go to side vision place and continue the game.
+        else {
+            /* Here, go to side vision place.*/
 
+            /* Update previous image and go on. */
+            vision_srv_request.request.last_state_fen_string = fen_string;
+            vision_srv_request.request.query_type = "update_prev";
+            resp = vision_client.call(vision_srv_request);
 
-
-
-        // Now, we have the coordinates of the pieces, we can do something with it!
-
-        /*
-
-        // send the chessboard info to stockfish
-        while(!chess_next_move_client.call(chess_move)){
-            ROS_WARN_STREAM("Chess next move call unsuccessful!");
-            ros::Duration(0.01).sleep();
         }
-        */
-        /*
-        // If player cheated, send the info to the HRI, and let HRI to finish its movement!!
-        // If player plays correctly, send the info to vision, get the coordinates, send them to motion planner node
-        // USER CHEATED!
-        if(chess_move.response.is_state_valid == 0){
-            ROS_WARN_STREAM("Player cheated!");
-            pick_and_place.request.is_something_hacky = 1;
-            while(!pick_and_place_client.call(pick_and_place)){
-                ROS_WARN_STREAM("Pick and place call unsuccessful!");
-                ros::Duration(0.01).sleep();
-            }
-        }
-        else{
-        */
-            /*
-            chessmate::chessboard_to_coord chessboard_to_coord;
-            chessboard_to_coord.request.take_place_x = chess_move.response.take_place_x;
-            chessboard_to_coord.request.take_place_y = chess_move.response.take_place_y;
-            chessboard_to_coord.request.put_place_x = chess_move.response.put_place_x;
-            chessboard_to_coord.request.put_place_y = chess_move.response.put_place_y;
-            */
-            /*
-            while(!find_coordinates_from_chessboard_client.call(chessboard_to_coord)){
-                ROS_WARN_STREAM("find coordinates from chessboard call unsuccessful!");
-                ros::Duration(0.01).sleep();
-            }
-            */
-            /*
-            pick_and_place.request.take_coord_x = next_move.response.take_coord_x;
-            pick_and_place.request.take_coord_y = next_move.response.take_coord_y;
-            pick_and_place.request.take_coord_z = next_move.response.take_coord_z;
-            pick_and_place.request.put_coord_x = next_move.response.put_coord_x;
-            pick_and_place.request.put_coord_y = next_move.response.put_coord_y;
-            pick_and_place.request.put_coord_z = next_move.response.put_coord_z;
-            pick_and_place.request.is_something_hacky = 0;
-            while(!pick_and_place_client.call(pick_and_place)){
-                ROS_WARN_STREAM("Pick and place call unsuccessful!");
-                ros::Duration(0.01).sleep();
-            }
-            */
-        //}
+
+    
 
         // Here we need to check if HRI part or motion planner part completed their movements.
         // However, I am not sure which way is the best since we did not implement these parts.
@@ -473,4 +462,16 @@ int main(int argc, char** argv){
 }
 
 
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
