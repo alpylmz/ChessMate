@@ -6,7 +6,7 @@ import copy
 from skimage.metrics import structural_similarity
 from return_codes import *
 from stockfish import Stockfish
-
+from camera import Camera
 
 #### STOCKFISH executable path ####
 STOCKFISH_PATH = "/home/alp/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64"
@@ -15,9 +15,6 @@ STOCKFISH_PATH = "/home/alp/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_li
 # Get current directory
 current_dir = os.path.dirname(os.path.realpath(__file__))
 EMPTY_IMAGE_PATH = current_dir + "/monopol-square-photos/"
-
-# Chessboard square information.
-SQUARE_WIDTH = 0.041
 
 
 #### Corner finding parameters. #####
@@ -30,15 +27,13 @@ K = 0.04
 #### Corner finding parameters. #####
 
 
-class Vision():
-    def __init__(self, top_left_x_coordinate, top_left_y_coordinate):
-        self.top_left_x_coordinate = top_left_x_coordinate
-        self.top_left_y_coordinate = top_left_y_coordinate
+class TopVision():
+    def __init__(self,camera_object):
+        self.camera = camera_object
         self.square_information = np.ones((8, 8), dtype=str)
         self.empty_images_array = np.ones((8, 8), dtype=list)
+        self.stockfish_engine = Stockfish(path=STOCKFISH_PATH)
         self.read_empty_images()
-        self.get_square_coordinates()
-        self.initialize_realsense()
 
 
 
@@ -192,23 +187,6 @@ class Vision():
 
 
 
-    def initialize_realsense(self):
-        self.pipeline = real_sense.pipeline()
-        self.config = real_sense.config()
-
-        pipeline_wrapper = real_sense.pipeline_wrapper(self.pipeline)
-        pipeline_profile = self.config.resolve(pipeline_wrapper)
-        device = pipeline_profile.get_device()
-
-        self.config.enable_stream(real_sense.stream.color, 640, 480, real_sense.format.bgr8, 30)
-
-        profile = self.pipeline.start(self.config)
-
-        self.depth_scale = profile.get_device().first_depth_sensor().get_depth_scale()
-        self.align_stream = real_sense.align(real_sense.stream.color)
-
-
-
     def read_empty_images(self):
         for i in range(8):
             for j in range(8):
@@ -254,32 +232,8 @@ class Vision():
 
 
 
-    def get_square_coordinates(self):
-        # coordinates["a8"] = [x, y]
-        # coordinates["f4"] = [x, y]
-        coordinates = dict()
-        for i in range(8):
-            x_coordinate = self.top_left_x_coordinate - SQUARE_WIDTH * i
-            y_coordinate = self.top_left_y_coordinate
-            for j in range(8):
-                coordinate_list = [x_coordinate,y_coordinate]
-                coordinates[self.get_square_as_string(i,j)] = coordinate_list
-                y_coordinate -= SQUARE_WIDTH
-
-        self.coordinates = coordinates
-
-
-
-    def get_piece_coordinates(self, from_square, to_square):
-        from_square_coordinates = self.coordinates[from_square]
-        to_square_coordinates = self.coordinates[to_square]
-
-        return from_square_coordinates, to_square_coordinates
-
-
-
     def get_possible_movements(self,last_state_fen_string=str,base_square=str):
-        stockfish_engine = Stockfish(path=STOCKFISH_PATH)
+        self.stockfish_engine.set_fen_position(last_state_fen_string)
         possible_movements = list()
         valid_movements = list()
         last_state_as_array = self.get_last_state(last_state_fen_string)
@@ -288,11 +242,8 @@ class Vision():
                 if last_state_as_array[i][j] == 'F':
                     possible_movements.append(base_square + self.get_square_as_string(i,j))
 
-        last_state_fen_string = last_state_fen_string.replace("w","b")
-        stockfish_engine.set_fen_position(last_state_fen_string)
-
         for movement in possible_movements:
-            if stockfish_engine.is_move_correct(movement):
+            if self.stockfish_engine.is_move_correct(movement):
                 valid_movements.append(movement)
 
 
@@ -304,20 +255,12 @@ class Vision():
         try:
             counter = 0
             while True:
-                frames = self.pipeline.wait_for_frames()
-                aligned_frames = self.align_stream.process(frames)
-
-                color_frame = aligned_frames.get_color_frame()
-
-                if not color_frame:
-                    continue
-
                 if counter < 5:
                     counter += 1
                     continue
 
-                color_image = np.asanyarray(color_frame.get_data())
-                square_width, square_height, x_pixel, y_pixel = self.find_corners(color_image)
+                color_frame, depth_frame, depth_scale = self.camera.GetImage()
+                square_width, square_height, x_pixel, y_pixel = self.find_corners(color_frame)
                 square_width, square_height, x_pixel, y_pixel = 45,46,198,52 ### OVERWRITING IT FOR NOW!!!
     
 
@@ -328,7 +271,7 @@ class Vision():
 
 
 
-                self.get_empty_full_information(color_image, square_width, square_height, x_pixel, y_pixel)
+                self.get_empty_full_information(color_frame, square_width, square_height, x_pixel, y_pixel)
                 last_state = self.get_last_state(last_state_fen_string)
 
 
@@ -345,7 +288,6 @@ class Vision():
                 ## Piece is moved from empty square to full square. Difference is 2 in this case.
                 ## Piece ate the other piece. Difference is 1 in this case.
                 ## More than 2 difference means we could not understand game state correctly.
-
                 if number_of_differences == 2:
                     return TWO_DIFFERENCE_DETECTED, movement
 
@@ -375,7 +317,6 @@ class Vision():
 
 
 if __name__ == '__main__':
-    vision = Vision(0.5410416700640096,0.320580303627435)
-    print(vision.get_movement('rnbqkbnr/ppppp1pp/8/5p2/4P3/8/PPPP1PPP/RNBQKBNR w - - 0 1'))
-    #print(vision.get_movement('8/5Pp1/p7/6K1/8/3B1Pkp/1r3R2/8 w - - 0 1'))
-
+    camera = Camera()
+    top_vision = TopVision(camera)
+    print(top_vision.get_movement('rnbqkbnr/ppppp1pp/8/5p2/4P3/8/PPPP1PPP/RNBQKBNR w - - 0 1'))
