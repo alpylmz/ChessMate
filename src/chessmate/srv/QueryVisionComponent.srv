@@ -1,3 +1,4 @@
+string query_type
 string last_state_fen_string
 ---
 int32 return_code
