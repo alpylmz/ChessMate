@@ -1,3 +1,4 @@
 string move
 ---
 string fen_string
+string game_state
