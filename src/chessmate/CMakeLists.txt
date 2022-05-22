@@ -17,6 +17,7 @@ add_service_files(
   chessboard_to_coord.srv
   see_chessboard.srv
   chess_next_move.srv
+  chess_game_state.srv
   franka_control_start_stop.srv
   pick_and_place.srv
   QueryVisionComponent.srv

@@ -2,6 +2,7 @@ import rospy
 import stockfish
 from chessmate.srv import chess_next_move, chess_next_moveResponse
 from chessmate.srv import chess_opponent_move, chess_opponent_moveResponse
+from chessmate.srv import chess_game_state, chess_game_stateResponse
 
 
 # need stockfish binary path!   
@@ -28,7 +29,11 @@ def chess_next_move_func(req):
     else:    
         return chess_next_moveResponse(1, best_move[:2], best_move[2:],_stockfish.get_fen_position(),"continue")
 
-
+def chess_game_state_func(req):
+    global _stockfish
+    evaluation = _stockfish.get_wdl_stats()
+    print(evaluation)
+    return chess_game_stateResponse(True,evaluation[0], evaluation[1], evaluation[2])
 
 
 def chess_opponent_move_func(req):
@@ -56,6 +61,8 @@ if __name__ == "__main__":
     s = rospy.Service("/chess_next_move", chess_next_move, chess_next_move_func)
 
     s2 = rospy.Service("/chess_opponent_move", chess_opponent_move, chess_opponent_move_func)
+
+    s3 = rospy.Service("/chess_game_state", chess_game_state, chess_game_state_func)
 
     rospy.spin()
 

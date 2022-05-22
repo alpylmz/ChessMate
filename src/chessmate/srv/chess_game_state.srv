@@ -1,0 +1,6 @@
+---
+# win draw lose probability in [0,1000]
+bool success
+int32 win
+int32 draw
+int32 lose

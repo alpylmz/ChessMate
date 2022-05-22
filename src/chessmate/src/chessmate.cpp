@@ -18,6 +18,7 @@
 #include "chessmate/QueryVisionComponent.h"
 #include "chessmate/chess_opponent_move.h"
 #include "chessmate/chess_next_move.h"
+#include "chessmate/chess_game_state.h"
 #include "chessmate/getPositionOfPieces.h"
 
 
@@ -51,7 +52,7 @@ const int NEUTRAL_FACE=17000;
 /** get_HRI_trajectory():    
     returns HRI trajectory with respect to the game state
 
-    @param game_status what is the game status between -100 , 100 (Positive is advantage white, negative is advantage black) stockfish can provide this value with stockfish.get_evaluation() the mate type will be this
+    @param game_status what is the game status, stockfish returns wdl (win-draw-lose) stats
     @param breath do you want the breathing trajectory
     @param hri_client HRI service client
     @return FollowJointTrajectoryGoal resulting trajectory
@@ -66,7 +67,7 @@ control_msgs::FollowJointTrajectoryGoal get_HRI_trajectory(float game_status, bo
     bool resp;
     resp = hri_client.call(hri_srv_request);
 
-    std::cout << "HRI service call is " << resp << std::endl;
+    std::cout << "HRI service is returned " << resp << std::endl;
 
     control_msgs::FollowJointTrajectoryGoal result_joint_traj = hri_srv_request.response.trajGoal;
 
@@ -74,6 +75,16 @@ control_msgs::FollowJointTrajectoryGoal get_HRI_trajectory(float game_status, bo
     return result_joint_traj;
 }
 
+float get_win_chance(ros::ServiceClient& chess_game_state_client)
+{
+    chessmate::chess_game_state chess_game_state;
+    bool resp;
+    resp = chess_game_state_client.call(chess_game_state);
+
+    std::cout << "Game state service is returned " << resp << std::endl;
+
+    return ((float)chess_game_state.response.win / 1000.0f);
+}
 
 int main(int argc, char** argv){
 
@@ -113,6 +124,11 @@ int main(int argc, char** argv){
 
     ros::ServiceClient gripper_client = n.serviceClient<franka_gripper::GripperCommand>("/franka_custom_gripper_service");
     franka_gripper::GripperCommand gripper_request;
+
+    
+    ros::ServiceClient chess_game_state_client = n.serviceClient<chessmate::chess_game_state>("/chess_game_state");
+    //! example call to get_win_chance
+    // float win_chance = get_win_chance(chess_game_state_client);
 
     // the hri service executable is at franka_example_controllers/scripts/hri_component
     ros::ServiceClient hri_client = n.serviceClient<franka_msgs::HRI>("/hri_traj");
