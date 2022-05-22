@@ -23,6 +23,7 @@
 
 #include "franka_msgs/SetPositionCommand.h"
 #include "franka_msgs/SetChessGoal.h"
+#include "franka_msgs/HRI.h"
 #include "franka_gripper/GripperCommand.h"
 
 std::string fen_string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b - - 0 1";
@@ -47,7 +48,35 @@ const int UNHAPPY_FACE=16000;
 const int NEUTRAL_FACE=17000;
 
 
+/** get_HRI_trajectory():    
+    returns HRI trajectory with respect to the game state
+
+    @param game_status what is the game status between 0-100 (50 is balanced game, lower values are for robot is likely to lose, higher values are for robot is in the lead)
+    @param breath do you want the breathing trajectory
+    @param hri_client HRI service client
+    @return FollowJointTrajectoryGoal resulting trajectory
+*/
+control_msgs::FollowJointTrajectoryGoal get_HRI_trajectory(int game_status, bool breath, ros::ServiceClient& hri_client)
+{
+    //call this function to get the trajectory
+    franka_msgs::HRI hri_srv_request;
+    hri_srv_request.request.breathing = breath;
+    hri_srv_request.request.game_status = game_status;
+    
+    bool resp;
+    resp = hri_client.call(hri_srv_request);
+
+    std::cout << "HRI service call is " << resp << std::endl;
+
+    control_msgs::FollowJointTrajectoryGoal result_joint_traj = hri_srv_request.response.trajGoal;
+
+    //retuns the wanted joint trajectory
+    return result_joint_traj;
+}
+
+
 int main(int argc, char** argv){
+
     ros::init(argc, argv, "chessmate");
     ros::NodeHandle n;
 
@@ -85,6 +114,10 @@ int main(int argc, char** argv){
     ros::ServiceClient gripper_client = n.serviceClient<franka_gripper::GripperCommand>("/franka_custom_gripper_service");
     franka_gripper::GripperCommand gripper_request;
 
+    // the hri service executable is at franka_example_controllers/scripts/hri_component
+    ros::ServiceClient hri_client = n.serviceClient<franka_msgs::HRI>("/hri_traj");
+    //! example call to hri func
+    // control_msgs::FollowJointTrajectoryGoal trajectory_to_follow = get_HRI_trajectory(0, hri_client);
 
     ROS_INFO_STREAM("Main loop starting!");
 
@@ -162,8 +195,8 @@ int main(int argc, char** argv){
                 default:
                     ROS_WARN_STREAM("Default in the switch statement. We should not be here.");
                     ros::Duration(1).sleep();
+                }
         }
-
 
         if (movement_in_fen == "") {
             /*
@@ -316,8 +349,9 @@ int main(int argc, char** argv){
         // go to above of take piece 
         joint_request.request.chess_place = take_place_square + "above";
         ROS_INFO_STREAM("Starting movement!");
-        int a;
+        
         std::cin >> a;
+        std::cout << "exs";
         resp = joint_client.call(joint_request);
         if(!resp){
             ROS_WARN_STREAM("Error in first go request");
@@ -459,6 +493,7 @@ int main(int argc, char** argv){
         // However, I am not sure which way is the best since we did not implement these parts.
         // So I left it here...
     }
+    
 }
 
 
