@@ -117,7 +117,7 @@ int main(int argc, char** argv){
     // the hri service executable is at franka_example_controllers/scripts/hri_component
     ros::ServiceClient hri_client = n.serviceClient<franka_msgs::HRI>("/hri_traj");
     //! example call to hri func
-    // control_msgs::FollowJointTrajectoryGoal trajectory_to_follow = get_HRI_trajectory(0, hri_client);
+    // control_msgs::FollowJointTrajectoryGoal trajectory_to_follow = get_HRI_trajectory(game_status, want_to_breath, hri_client);
 
     ROS_INFO_STREAM("Main loop starting!");
 
