@@ -51,12 +51,12 @@ const int NEUTRAL_FACE=17000;
 /** get_HRI_trajectory():    
     returns HRI trajectory with respect to the game state
 
-    @param game_status what is the game status between 0-100 (50 is balanced game, lower values are for robot is likely to lose, higher values are for robot is in the lead)
+    @param game_status what is the game status between -100 , 100 (Positive is advantage white, negative is advantage black) stockfish can provide this value with stockfish.get_evaluation() the mate type will be this
     @param breath do you want the breathing trajectory
     @param hri_client HRI service client
     @return FollowJointTrajectoryGoal resulting trajectory
 */
-control_msgs::FollowJointTrajectoryGoal get_HRI_trajectory(int game_status, bool breath, ros::ServiceClient& hri_client)
+control_msgs::FollowJointTrajectoryGoal get_HRI_trajectory(float game_status, bool breath, ros::ServiceClient& hri_client)
 {
     //call this function to get the trajectory
     franka_msgs::HRI hri_srv_request;
