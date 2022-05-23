@@ -40,6 +40,8 @@ class Camera():
 
             return color_image,depth_frame,self.depth_scale
 
+    def Stop(self):
+        self.pipeline.stop()
 
 
 
