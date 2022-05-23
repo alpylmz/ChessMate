@@ -12,15 +12,19 @@ TOP_LEFT_X = 0.5410416700640096
 TOP_LEFT_Y = 0.320580303627435
 
 
+def camera_release(camera):
+    camera.Stop()    
+
+
+
 # Since the main loop is in C++, I need to make vision.py a ROS service
 if __name__ == "__main__":
-    
     camera = Camera()
     coordinate_class = Coordinate(TOP_LEFT_X, TOP_LEFT_Y, SQUARE_WIDTH)
     top_vision = TopVision(camera)
     side_vision = SideVision()
     face_tracer = FaceTracer(camera)
-    side_vision_prev_image = 0
+    side_vision_prev_image = None
 
 
     # init ros node
@@ -68,5 +72,9 @@ if __name__ == "__main__":
     rospy.Service('/franka_vision', QueryVisionComponent, queryvisioncomponent_handler)
 
     rospy.Service('/get_piece_coordinates', getPositionOfPieces, getPieceCoordinates)
+
+    
+    rospy.on_shutdown(camera_release(camera))
+
 
     rospy.spin()
