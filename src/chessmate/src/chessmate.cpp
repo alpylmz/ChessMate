@@ -25,6 +25,7 @@
 
 #include "franka_msgs/SetPositionCommand.h"
 #include "franka_msgs/SetChessGoal.h"
+#include "franka_msgs/SetTrajectoryCommand.h"
 #include "franka_msgs/HRI.h"
 #include "franka_gripper/GripperCommand.h"
 
@@ -81,7 +82,7 @@ control_msgs::FollowJointTrajectoryGoal get_HRI_trajectory(float game_status, bo
     bool resp;
     resp = hri_client.call(hri_srv_request);
 
-    std::cout << "HRI service is returned " << resp << std::endl;
+    std::cout << "HRI service returned " << resp << std::endl;
 
     control_msgs::FollowJointTrajectoryGoal result_joint_traj = hri_srv_request.response.trajGoal;
 
@@ -134,13 +135,14 @@ int main(int argc, char** argv){
     chessmate::pick_and_place pick_and_place;
 
     ros::ServiceClient go_client = n.serviceClient<franka_msgs::SetPositionCommand>("/franka_go");
-    franka_msgs::SetPositionCommand go_request; 
 
     ros::ServiceClient gripper_client = n.serviceClient<franka_gripper::GripperCommand>("/franka_custom_gripper_service");
 
     ros::ServiceClient chesswatch_client = n.serviceClient<chessmate::chesswatch_serv>("/chess_clock");
     chessmate::chesswatch_serv chesswatch_request;
 
+    ros::ServiceClient trajectory_client = n.serviceClient<franka_msgs::SetTrajectoryCommand>("/franka_trajectory");
+    franka_msgs::SetTrajectoryCommand trajectory_request;
 
     
     ros::ServiceClient chess_game_state_client = n.serviceClient<chessmate::chess_game_state>("/chess_game_state");
@@ -171,18 +173,11 @@ int main(int argc, char** argv){
         // Init should be updated as side vision place.
         bool resp;
         std::cin >> a;
-        go_request.request.x = 0;
-        go_request.request.y = 0;
-        go_request.request.z = 0.40;
-        go_request.request.is_relative = false;
-        go_request.request.go_to_init = true;
-        resp = go_client.call(go_request);
-        if(!resp){
-            ROS_WARN_STREAM("Error in zeroth go request go to init");
-            ros::Duration(0.01).sleep();
+        resp = franka_go(go_client, 0, 0, 0, false, false, true);
+        if (!resp) {
             continue;
         }
-        ROS_INFO_STREAM("init go successfull");
+
 
         /* Here, go to side vision place.*/
         /* Update previous image and go on. */
@@ -279,7 +274,10 @@ int main(int argc, char** argv){
             /*
                 Here, we need to go top view to get the prediction from top view.
             */
-
+            resp = franka_go(go_client, 0, 0, 0, false, true, false);
+            if (!resp) {
+                continue;
+            }
 
             vision_srv_request.request.last_state_fen_string = fen_string;
             vision_srv_request.request.query_type = "top";
@@ -350,7 +348,11 @@ int main(int argc, char** argv){
         // If player cheats, do something.
         if (chess_opponent_move.response.fen_string == "cheat") {
             ROS_INFO_STREAM("Cheat detected. HRI do angry movement.");
+            auto trajectory = get_HRI_trajectory(0.0, false ,hri_client);
+            trajectory_request.request.trajGoal = trajectory;
+            trajectory_client.call(trajectory_request);
             // HRI will do something here.
+            //continue;
         }
 
         else if (chess_opponent_move.response.game_state == "lose") {
@@ -505,24 +507,6 @@ int main(int argc, char** argv){
         gripper_move(gripper_client, 0.05, 0.05, 50, false, true, false);
         ROS_INFO_STREAM(" gripper release  successfull");
         std::cin >> a;
-
-
-        /*
-            Here, we need to go side vision place instead of init.
-            Side vision will take photo and update previous image.
-        */
-        go_request.request.x = 0;
-        go_request.request.y = 0;
-        go_request.request.z = 0.4;
-        go_request.request.is_relative = false;
-        go_request.request.go_to_init = true;
-        resp = go_client.call(go_request);
-        if(!resp){
-            ROS_WARN_STREAM("Error in last go request go to init");
-            ros::Duration(0.01).sleep();
-            continue;
-        }
-        ROS_INFO_STREAM("go to init successfull"); // Should be side vision place. Will be determined.
 
 
 

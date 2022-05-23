@@ -3,7 +3,7 @@
 #include <iostream>
 #include "franka_gripper/GripperCommand.h"
 #include <ros/ros.h>
-
+#include "franka_msgs/SetPositionCommand.h"
 
 bool is_square_full(const std::string& fen_string,const std::string& square) {
     char board[64];
@@ -122,4 +122,23 @@ void gripper_move(ros::ServiceClient gripper_client, double width, double speed,
     gripper_request.request.want_to_move = want_to_move;
     gripper_request.request.homing = homing;
     gripper_client.call(gripper_request);
+}
+
+bool franka_go(ros::ServiceClient go_client, float x, float y, float z, bool is_relative, bool go_to_init, bool go_to_side_vision_init) {
+    bool resp;
+    franka_msgs::SetPositionCommand go_request; 
+    go_request.request.x = x;
+    go_request.request.y = y;
+    go_request.request.z = z;
+    go_request.request.is_relative = is_relative;
+    go_request.request.go_to_init = go_to_init;
+    go_request.request.go_to_side_vision_init = go_to_side_vision_init;
+    resp = go_client.call(go_request);
+    if(!resp){
+        ROS_WARN_STREAM("Error in go to init");
+        ros::Duration(0.01).sleep();
+        return false;
+    }
+    ROS_INFO_STREAM("init go successfull");
+    return true;
 }
