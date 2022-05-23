@@ -10,13 +10,13 @@ WIN=100002
 LOSS=100003
 IDLE=100004
 
-class GetState():
+class ArduinoDriver():
 
     def __init__(self) -> None:
         self.serial_com = serial.Serial(SERIAL_PORT,BAUDRATE)
 
 
-    def get_state(self):
+    def get_game_state(self):
         self.serial_com.write("G".encode('utf-8'))
         packet = self.serial_com.read()
         print(packet.decode('utf-8'))
@@ -41,12 +41,18 @@ class GetState():
             return IDLE
 
 
-if __name__ == '__main__':
-    getstate = GetState()
-    a = input()
-    getstate.get_state()
-    a = input() 
-    getstate.get_state()
-    a = input()
-    getstate.get_state()
+    def change_game_state(self):
+        self.serial_com.write("C".encode('utf-8'))
+        print("Signal is sent.")
 
+
+if __name__ == '__main__':
+    arduino_driver = ArduinoDriver()
+    a = input()
+    arduino_driver.change_game_state()
+    a = input() 
+    arduino_driver.get_game_state()
+    a = input()
+    arduino_driver.get_game_state()
+    a = input()
+    arduino_driver.get_game_state()
