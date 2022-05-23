@@ -6,10 +6,12 @@ from side_vision import SideVision
 from face_tracer import FaceTracer
 from chessmate.srv import QueryVisionComponentResponse, QueryVisionComponent, getPositionOfPieces, getPositionOfPiecesResponse
 from return_codes import *
+from functools import partial
 
-SQUARE_WIDTH = 0.041
-TOP_LEFT_X = 0.5410416700640096
-TOP_LEFT_Y = 0.320580303627435
+SQUARE_WIDTH = 0.045
+TOP_LEFT_X = 0.6570159050451884
+TOP_LEFT_Y = 0.20263663436491797
+side_vision_prev_image = None
 
 
 def camera_release(camera):
@@ -24,7 +26,7 @@ if __name__ == "__main__":
     top_vision = TopVision(camera)
     side_vision = SideVision()
     face_tracer = FaceTracer(camera)
-    side_vision_prev_image = None
+
 
 
     # init ros node
@@ -33,6 +35,7 @@ if __name__ == "__main__":
 
     # queryvisioncomponent handler, executes vision_system.get_movement()
     def queryvisioncomponent_handler(req):
+        global side_vision_prev_image
         if req.query_type == "get_emotion":
             return_code = face_tracer.get_emotion()
             return QueryVisionComponentResponse(return_code,"")
@@ -74,7 +77,7 @@ if __name__ == "__main__":
     rospy.Service('/get_piece_coordinates', getPositionOfPieces, getPieceCoordinates)
 
     
-    rospy.on_shutdown(camera_release(camera))
+    rospy.on_shutdown(partial(camera_release, camera))
 
 
     rospy.spin()
