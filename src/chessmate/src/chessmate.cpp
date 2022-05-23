@@ -20,6 +20,7 @@
 #include "chessmate/chess_next_move.h"
 #include "chessmate/chess_game_state.h"
 #include "chessmate/getPositionOfPieces.h"
+#include "chessmate/chesswatch_serv.h"
 
 
 #include "franka_msgs/SetPositionCommand.h"
@@ -50,6 +51,7 @@ const int NEUTRAL_FACE=17000;
 /* Vision function return codes */
 
 
+const float ARDUINO_CHECK_SLEEP = 1.0;
 /* Arduino driver return codes */
 const int ROBOT_PLAY=100000;
 const int OPPONENT_PLAY=100001;
@@ -137,6 +139,10 @@ int main(int argc, char** argv){
     ros::ServiceClient gripper_client = n.serviceClient<franka_gripper::GripperCommand>("/franka_custom_gripper_service");
     franka_gripper::GripperCommand gripper_request;
 
+    ros::ServiceClient chesswatch_client = n.serviceClient<chessmate::chesswatch_serv>("/chess_clock");
+    chessmate::chesswatch_serv chesswatch_request;
+
+
     
     ros::ServiceClient chess_game_state_client = n.serviceClient<chessmate::chess_game_state>("/chess_game_state");
     //! example call to get_win_chance
@@ -199,6 +205,53 @@ int main(int argc, char** argv){
         /* Here arduino driver logic will be written. */
         /* Send signal to arduino to indicate player can play.*/
         ROS_INFO_STREAM("Wait for opponent move.");
+
+        // send signal to arduino to indicate player can play.
+        chesswatch_request.request = "change";
+        resp = chesswatch_client.call(chesswatch_request);
+        if(!resp){
+            ROS_WARN_STREAM("Error in chesswatch request");
+            ros::Duration(0.01).sleep();
+            continue;
+        }
+        ROS_INFO_STREAM("chesswatch request successfull");
+        while(true) {
+            chesswatch_request.request = "get";
+            resp = chesswatch_client.call(chesswatch_request);
+            if(!resp){
+                ROS_WARN_STREAM("Error in chesswatch request");
+                ros::Duration(0.01).sleep();
+                continue;
+            }
+            bool flag = false;
+            switch (chesswatch_request.response.return_code)
+            {
+            case ROBOT_PLAY:
+                ros::Duration(ARDUINO_CHECK_SLEEP).sleep();
+                flag = true;
+                break;
+            case OPPONENT_PLAY:
+            case IDLE:
+                ros::Duration(ARDUINO_CHECK_SLEEP).sleep();
+                break;
+                
+            case WIN:
+                /* code */
+                ROS_ERROR_STREAM("You win!");
+                break;
+            case LOSS:
+                /* code */
+                ROS_ERROR_STREAM("You lose!");
+                break;
+            default:
+                break;
+            }
+            if (flag) {
+                break;
+            }
+        }
+
+
         std::cin >> a;
 
 
