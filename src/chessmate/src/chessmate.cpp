@@ -207,7 +207,7 @@ int main(int argc, char** argv){
         ROS_INFO_STREAM("Wait for opponent move.");
 
         // send signal to arduino to indicate player can play.
-        chesswatch_request.request = "change";
+        chesswatch_request.request.request = "change";
         resp = chesswatch_client.call(chesswatch_request);
         if(!resp){
             ROS_WARN_STREAM("Error in chesswatch request");
@@ -216,7 +216,7 @@ int main(int argc, char** argv){
         }
         ROS_INFO_STREAM("chesswatch request successfull");
         while(true) {
-            chesswatch_request.request = "get";
+            chesswatch_request.request.request = "get";
             resp = chesswatch_client.call(chesswatch_request);
             if(!resp){
                 ROS_WARN_STREAM("Error in chesswatch request");
@@ -227,8 +227,9 @@ int main(int argc, char** argv){
             switch (chesswatch_request.response.return_code)
             {
             case ROBOT_PLAY:
-                ros::Duration(ARDUINO_CHECK_SLEEP).sleep();
+                ROS_INFO_STREAM("Now robot's turn");
                 flag = true;
+                ros::Duration(ARDUINO_CHECK_SLEEP).sleep();
                 break;
             case OPPONENT_PLAY:
             case IDLE:
@@ -252,7 +253,6 @@ int main(int argc, char** argv){
         }
 
 
-        std::cin >> a;
 
 
 

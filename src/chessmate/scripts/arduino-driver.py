@@ -54,7 +54,7 @@ def rospy_service_callback(req):
         return chesswatch_servResponse(arduino_driver.get_game_state())
     elif req.request == "change":
         arduino_driver.change_game_state()
-        return 1
+        return chesswatch_servResponse(1)
     
 
 
