@@ -1,6 +1,8 @@
 #include <string>
 #include <cctype> 
 #include <iostream>
+#include "franka_gripper/GripperCommand.h"
+#include <ros/ros.h>
 
 
 bool is_square_full(const std::string& fen_string,const std::string& square) {
@@ -111,4 +113,13 @@ char get_piece_to_take(const std::string& fen_string,const std::string& square) 
 }
 
 
-
+void gripper_move(ros::ServiceClient gripper_client, double width, double speed, double force, bool want_to_pick, bool want_to_move, bool homing) {
+    franka_gripper::GripperCommand gripper_request;
+    gripper_request.request.width = width;
+    gripper_request.request.speed = speed;
+    gripper_request.request.force = force;
+    gripper_request.request.want_to_pick = want_to_pick;
+    gripper_request.request.want_to_move = want_to_move;
+    gripper_request.request.homing = homing;
+    gripper_client.call(gripper_request);
+}

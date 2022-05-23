@@ -137,7 +137,6 @@ int main(int argc, char** argv){
     franka_msgs::SetPositionCommand go_request; 
 
     ros::ServiceClient gripper_client = n.serviceClient<franka_gripper::GripperCommand>("/franka_custom_gripper_service");
-    franka_gripper::GripperCommand gripper_request;
 
     ros::ServiceClient chesswatch_client = n.serviceClient<chessmate::chesswatch_serv>("/chess_clock");
     chessmate::chesswatch_serv chesswatch_request;
@@ -159,19 +158,9 @@ int main(int argc, char** argv){
     // main control starts here!
     while(true){
         ROS_INFO_STREAM("Main loop starts!");
-        int a;
-        std::cin >> a;    
+        int a;  
 
-        gripper_request.request.width = 0.0;
-        gripper_request.request.speed = 0.04;
-        gripper_request.request.force = 50;
-        gripper_request.request.want_to_pick = false;
-        gripper_request.request.want_to_move = true;
-        gripper_request.request.homing = false;
-        gripper_client.call(gripper_request);
-
-        ROS_INFO_STREAM("input until gripper");
-        std::cin >> a;
+        gripper_move(gripper_client, 0.0, 0.04, 50, false, true, false);
         ROS_INFO_STREAM("gripper successfull");
 
        
@@ -450,13 +439,7 @@ int main(int argc, char** argv){
         
         // prepare gripper
         std::cin >> a;
-        gripper_request.request.width = 0.04;
-        gripper_request.request.speed = 0.05;
-        gripper_request.request.force = 50;
-        gripper_request.request.want_to_pick = false;
-        gripper_request.request.want_to_move = true;
-        gripper_request.request.homing = false;
-        gripper_client.call(gripper_request);
+        gripper_move(gripper_client, 0.04, 0.05, 50, false, true, false);
 
         ROS_INFO_STREAM("gripper successfull");
 
@@ -473,14 +456,7 @@ int main(int argc, char** argv){
 
         // pick piece
         std::cin >> a;
-        gripper_request.request.width = pick_width;
-        gripper_request.request.speed = 0.05;
-        gripper_request.request.force = 50;
-        gripper_request.request.want_to_pick = true;
-        gripper_request.request.want_to_move = false;
-        gripper_request.request.homing = false;
-        gripper_client.call(gripper_request);
-
+        gripper_move(gripper_client, pick_width, 0.05, 50, true, false, false);
         ROS_INFO_STREAM("sec gripper successfull");
 
         std::cin >> a;
@@ -526,14 +502,7 @@ int main(int argc, char** argv){
         ROS_INFO_STREAM("fifth go successfull");
 
         std::cin >> a;
-        gripper_request.request.width = 0.05;
-        gripper_request.request.speed = 0.05;
-        gripper_request.request.force = 50;
-        gripper_request.request.want_to_pick = false;
-        gripper_request.request.want_to_move = true;
-        gripper_request.request.homing = false;
-        gripper_client.call(gripper_request);
-
+        gripper_move(gripper_client, 0.05, 0.05, 50, false, true, false);
         ROS_INFO_STREAM(" gripper release  successfull");
         std::cin >> a;
 
