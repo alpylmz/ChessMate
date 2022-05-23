@@ -126,10 +126,18 @@ void gripper_move(ros::ServiceClient gripper_client, double width, double speed,
 
 bool franka_go(ros::ServiceClient go_client, float x, float y, float z, bool is_relative, bool go_to_init, bool go_to_side_vision_init) {
     bool resp;
+    float q_x = -0.9133;
+    float q_y = 0.4070;
+    float q_z = -0.0070;
+    float q_w = 0.0116;
     franka_msgs::SetPositionCommand go_request; 
     go_request.request.x = x;
     go_request.request.y = y;
     go_request.request.z = z;
+    go_request.request.q_x = q_x;
+    go_request.request.q_y = q_y;
+    go_request.request.q_z = q_z;
+    go_request.request.q_w = q_w;
     go_request.request.is_relative = is_relative;
     go_request.request.go_to_init = go_to_init;
     go_request.request.go_to_side_vision_init = go_to_side_vision_init;
