@@ -13,7 +13,7 @@ class Camera():
         device = pipeline_profile.get_device()
 
         self.config.enable_stream(real_sense.stream.depth, 848, 480, real_sense.format.z16, 30)
-        self.config.enable_stream(real_sense.stream.color,1920, 1080, real_sense.format.bgr8, 30)
+        self.config.enable_stream(real_sense.stream.color, 1920, 1080, real_sense.format.bgr8, 30)
 
         profile = self.pipeline.start(self.config)
 
@@ -41,6 +41,7 @@ class Camera():
             return color_image,depth_frame,self.depth_scale
 
 
-
+    def Stop(self):
+        self.pipeline.stop()
 
 
