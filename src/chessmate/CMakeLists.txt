@@ -22,6 +22,7 @@ add_service_files(
   pick_and_place.srv
   QueryVisionComponent.srv
   getPositionOfPieces.srv
+  chesswatch_serv.srv
 )
 
 ## Generate added messages and services

@@ -1,5 +1,6 @@
 import serial
-
+import rospy
+from chessmate.srv import chesswatch_serv, chesswatch_servResponse
 
 SERIAL_PORT="/dev/ttyUSB0"
 BAUDRATE=9600
@@ -46,8 +47,24 @@ class ArduinoDriver():
         print("Signal is sent.")
 
 
+arduino_driver = ArduinoDriver()
+def rospy_service_callback(req):
+    global arduino_driver
+    if req.request == "get":
+        return chesswatch_servResponse(arduino_driver.get_game_state())
+    elif req.request == "change":
+        arduino_driver.change_game_state()
+        return 1
+    
+
+
 if __name__ == '__main__':
-    arduino_driver = ArduinoDriver()
+    # rospy create node
+    rospy.init_node('arduino_driver')
+    # create service "/chess_clock"
+    rospy.Service('/chess_clock', chesswatch_serv, rospy_service_callback)
+    rospy.spin()
+    """
     a = input()
     arduino_driver.change_game_state()
     a = input() 
@@ -56,3 +73,4 @@ if __name__ == '__main__':
     arduino_driver.get_game_state()
     a = input()
     arduino_driver.get_game_state()
+    """
