@@ -47,6 +47,18 @@ const int FACE_NOT_DETECTED=14000;
 const int HAPPY_FACE=15000;
 const int UNHAPPY_FACE=16000;
 const int NEUTRAL_FACE=17000;
+/* Vision function return codes */
+
+
+/* Arduino driver return codes */
+const int ROBOT_PLAY=100000;
+const int OPPONENT_PLAY=100001;
+const int WIN=100002;
+const int LOSS=100003;
+const int IDLE=100004;
+/* Arduino driver return codes */
+
+
 
 
 /** get_HRI_trajectory():    
@@ -177,8 +189,15 @@ int main(int argc, char** argv){
         }
         ROS_INFO_STREAM("init go successfull");
 
+        /* Here, go to side vision place.*/
+        /* Update previous image and go on. */
+        vision_srv_request.request.last_state_fen_string = fen_string;
+        vision_srv_request.request.query_type = "update_prev";
+        resp = vision_client.call(vision_srv_request);
 
 
+        /* Here arduino driver logic will be written. */
+        /* Send signal to arduino to indicate player can play.*/
         ROS_INFO_STREAM("Wait for opponent move.");
         std::cin >> a;
 
@@ -491,19 +510,6 @@ int main(int argc, char** argv){
             // HRI will do something here.
         }
 
-
-        // If we did not win, go to side vision place and continue the game.
-        else {
-            /* Here, go to side vision place.*/
-
-            /* Update previous image and go on. */
-            vision_srv_request.request.last_state_fen_string = fen_string;
-            vision_srv_request.request.query_type = "update_prev";
-            resp = vision_client.call(vision_srv_request);
-
-        }
-
-    
 
         // Here we need to check if HRI part or motion planner part completed their movements.
         // However, I am not sure which way is the best since we did not implement these parts.
