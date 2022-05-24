@@ -1,4 +1,3 @@
-from matplotlib import image
 from board import Board
 from chessBoard import ChessBoard
 from return_codes import *
