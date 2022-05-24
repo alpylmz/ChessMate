@@ -76,8 +76,8 @@ class Coordinate():
 
 
 if __name__ == "__main__":
-    A8_X = 0.6570159050451884
-    A8_Y = 0.20263663436491797
+    A8_X = 0.65078219
+    A8_Y = 0.19939440
     H1_X = 0.32620260
     H1_Y = -0.1092154
     coordinate = Coordinate(A8_X, A8_Y, H1_X, H1_Y)
