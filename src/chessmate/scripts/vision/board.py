@@ -80,7 +80,7 @@ class Board(BoardLocalization):
 
     def paint(self , squarest , img , inde):
 
-        corners = np.array([[670,420] , [1240,410] , [1320,900] , [520,900] ])
+        corners = np.array([[198,68] , [495,54] , [533,359] , [157,361] ])
         #corners = self.GetCorners(img)
         h_edges,v_edges = self.GetEdges(corners)
         rows = self.GetSquares(v_edges)
@@ -111,7 +111,7 @@ class Board(BoardLocalization):
         
   
   
-        corners = np.array([[600,185] , [1250,180] , [1360,820] , [505,840] ])
+        corners = np.array([[198,68] , [495,54] , [533,359] , [157,361]])
         #corners = self.GetCorners(img)
         h_edges,v_edges = self.GetEdges(corners)
         rows = self.GetSquares(v_edges)
