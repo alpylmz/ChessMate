@@ -1,15 +1,28 @@
 import cv2
+import numpy as np
+from math import cos,sin,sqrt,pi
 
 
 
-
-# Takes a8 square x and y coordinates.
 class Coordinate():
 
-    def __init__(self, top_left_x_coordinate, top_left_y_coordinate,square_width):
-        self.top_left_x_coordinate = top_left_x_coordinate
-        self.top_left_y_coordinate = top_left_y_coordinate
-        self.square_width = square_width
+    def __init__(self, a8_x_coordinate, a8_y_coordinate,h1_x_coordinate,h1_y_coordinate):
+        self.a8_x_coordinate = a8_x_coordinate
+        self.a8_y_coordinate = a8_y_coordinate
+        self.h1_x_coordinate = h1_x_coordinate
+        self.h1_y_coordinate = h1_y_coordinate
+        self.diagonal_x = self.h1_x_coordinate - self.a8_x_coordinate
+        self.diagonal_y = self.h1_y_coordinate - self.a8_y_coordinate
+        self.edge_length = sqrt(self.diagonal_y**2 + self.diagonal_x**2)/ sqrt(2)
+        self.square_length = self.edge_length / 7
+        self.a1_x_coordinate = a8_x_coordinate + ((self.diagonal_x * cos(pi / 4) - self.diagonal_y * sin(pi / 4)) / (self.edge_length * sqrt(2))) * self.edge_length
+        self.a1_y_coordinate = a8_y_coordinate + ((self.diagonal_x * sin(pi / 4) + self.diagonal_y * cos(pi / 4)) / (self.edge_length * sqrt(2))) * self.edge_length
+        self.h8_x_coordinate = a8_x_coordinate + ((self.diagonal_x * cos(- pi / 4) - self.diagonal_y * sin(- pi / 4)) / (self.edge_length * sqrt(2))) * self.edge_length
+        self.h8_y_coordinate = a8_y_coordinate + ((self.diagonal_x * sin(- pi / 4) + self.diagonal_y * cos(- pi / 4)) / (self.edge_length * sqrt(2))) * self.edge_length
+        self.number_decrease_x = (self.a1_x_coordinate - self.a8_x_coordinate) / 7
+        self.number_decrease_y = (self.a1_y_coordinate - self.a8_y_coordinate) / 7
+        self.letter_increase_x = (self.h8_x_coordinate - self.a8_x_coordinate) / 7
+        self.letter_increase_y = (self.h8_y_coordinate - self.a8_y_coordinate) / 7
         self.get_square_coordinates()
 
 
@@ -36,19 +49,21 @@ class Coordinate():
         return column + f'{row}'
 
 
+
     def get_square_coordinates(self):
         # coordinates["a8"] = [x, y]
         # coordinates["f4"] = [x, y]
         coordinates = dict()
         for i in range(8):
-            x_coordinate = self.top_left_x_coordinate - self.square_width * i
-            y_coordinate = self.top_left_y_coordinate
             for j in range(8):
-                coordinate_list = [x_coordinate, y_coordinate]
+                coordinate_list = [0,0]
+                coordinate_list[0] = self.a8_x_coordinate + (self.letter_increase_x * i) + (self.number_decrease_x * j)
+                coordinate_list[1] = self.a8_y_coordinate + (self.letter_increase_y * i) + (self.number_decrease_y * j)
                 coordinates[self.get_square_as_string(i, j)] = coordinate_list
-                y_coordinate -= self.square_width
+
 
         self.coordinates = coordinates
+
 
 
     def get_piece_coordinates(self, from_square, to_square):
@@ -60,4 +75,10 @@ class Coordinate():
 
 
 
-
+if __name__ == "__main__":
+    A8_X = 0.65078219
+    A8_Y = 0.19939440
+    H1_X = 0.32620260
+    H1_Y = -0.1092154
+    coordinate = Coordinate(A8_X, A8_Y, H1_X, H1_Y)
+    print(coordinate.coordinates)
