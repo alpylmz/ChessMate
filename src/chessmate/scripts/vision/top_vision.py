@@ -87,7 +87,7 @@ class TopVision():
             for j in range(8):
                 last_state[i][j] = 'E'
 
-        cp_fen_string = cp_fen_string[:len(cp_fen_string) - 10]
+        cp_fen_string = cp_fen_string.split(" ")[0]
         fen_list = cp_fen_string.split("/")
         for i in range(8):
             current_index = 0
