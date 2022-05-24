@@ -8,9 +8,13 @@ from chessmate.srv import QueryVisionComponentResponse, QueryVisionComponent, ge
 from return_codes import *
 from functools import partial
 
-SQUARE_WIDTH = 0.045
-TOP_LEFT_X = 0.6570159050451884
-TOP_LEFT_Y = 0.20263663436491797
+A8_X = 0.7187915752571079
+A8_Y = 0.22051247797150725
+H1_X = 0.3984956529830614
+H1_Y = -0.10476628814960992
+
+
+
 side_vision_prev_image = None
 
 
@@ -21,16 +25,23 @@ def camera_release(camera):
 
 # Since the main loop is in C++, I need to make vision.py a ROS service
 if __name__ == "__main__":
-    camera = Camera()
-    coordinate_class = Coordinate(TOP_LEFT_X, TOP_LEFT_Y, SQUARE_WIDTH)
-    top_vision = TopVision(camera)
-    side_vision = SideVision()
-    face_tracer = FaceTracer(camera)
-
-
+    coordinate_class = Coordinate(A8_X, A8_Y, H1_X, H1_Y)
 
     # init ros node
     rospy.init_node('vision_bridge')
+
+    def getPieceCoordinates(req):
+        from_coords, to_coords = coordinate_class.get_piece_coordinates(req.from_piece, req.to_piece)
+        return getPositionOfPiecesResponse(True, from_coords[0], from_coords[1], to_coords[0], to_coords[1])
+
+
+    rospy.Service('/get_piece_coordinates', getPositionOfPieces, getPieceCoordinates)
+
+
+    camera = Camera()
+    top_vision = TopVision(camera)
+    side_vision = SideVision()
+    face_tracer = FaceTracer(camera)
 
 
     # queryvisioncomponent handler, executes vision_system.get_movement()
@@ -64,20 +75,11 @@ if __name__ == "__main__":
 
 
 
-
-    def getPieceCoordinates(req):
-        from_coords, to_coords = coordinate_class.get_piece_coordinates(req.from_piece, req.to_piece)
-        return getPositionOfPiecesResponse(True, from_coords[0], from_coords[1], to_coords[0], to_coords[1])
-
-
-
     # start a ros service
     rospy.Service('/franka_vision', QueryVisionComponent, queryvisioncomponent_handler)
 
-    rospy.Service('/get_piece_coordinates', getPositionOfPieces, getPieceCoordinates)
 
     
     rospy.on_shutdown(partial(camera_release, camera))
-
 
     rospy.spin()
