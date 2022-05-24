@@ -87,7 +87,7 @@ class TopVision():
             for j in range(8):
                 last_state[i][j] = 'E'
 
-        cp_fen_string = cp_fen_string[:len(cp_fen_string) - 10]
+        cp_fen_string = cp_fen_string.split(" ")[0]
         fen_list = cp_fen_string.split("/")
         for i in range(8):
             current_index = 0
@@ -260,8 +260,8 @@ class TopVision():
                     continue
 
                 color_frame, depth_frame, depth_scale = self.camera.GetImage()
-                square_width, square_height, x_pixel, y_pixel = self.find_corners(color_frame)
-                square_width, square_height, x_pixel, y_pixel = 45,46,198,52 ### OVERWRITING IT FOR NOW!!!
+                #square_width, square_height, x_pixel, y_pixel = self.find_corners(color_frame)
+                square_width, square_height, x_pixel, y_pixel = 46,46,132,48 ### OVERWRITING IT FOR NOW!!!
     
 
 
@@ -273,7 +273,6 @@ class TopVision():
 
                 self.get_empty_full_information(color_frame, square_width, square_height, x_pixel, y_pixel)
                 last_state = self.get_last_state(last_state_fen_string)
-
 
                 ## No movement detected.
                 if (last_state == self.square_information).all() :
@@ -319,4 +318,4 @@ class TopVision():
 if __name__ == '__main__':
     camera = Camera()
     top_vision = TopVision(camera)
-    print(top_vision.get_movement('rnbqkbnr/ppppp1pp/8/5p2/4P3/8/PPPP1PPP/RNBQKBNR w - - 0 1'))
+    print(top_vision.get_movement("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b - - 0 1"))

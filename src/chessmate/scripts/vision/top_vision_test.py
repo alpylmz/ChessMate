@@ -204,17 +204,18 @@ class Difference():
 
 
                 color_image = np.asanyarray(color_frame.get_data())
-                square_width, square_height, x_pixel, y_pixel = self.find_corners(color_image)
-                print(square_width, square_height, x_pixel, y_pixel)
-                square_width, square_height, x_pixel, y_pixel = 45,46,198,52
+                #square_width, square_height, x_pixel, y_pixel = self.find_corners(color_image)
+                #print(square_width, square_height, x_pixel, y_pixel)
+                square_width, square_height, x_pixel, y_pixel = 46,46,132,48
                 # #
                 # if square_width < 20 or square_height < 20 or abs(square_width - square_height) > 5 :
                 #     continue
 
 
 
+
                 self.get_empty_full_information(color_image, square_width, square_height, x_pixel, y_pixel)
-                self.generate_empty_squares(color_image, square_width, square_height, x_pixel, y_pixel)
+                #self.generate_empty_squares(color_image, square_width, square_height, x_pixel, y_pixel)
 
 
                 key = cv2.waitKey(1)
