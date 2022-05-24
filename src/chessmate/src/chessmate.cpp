@@ -61,8 +61,14 @@ const int LOSS=100003;
 const int IDLE=100004;
 /* Arduino driver return codes */
 
-const float ABOVE_ROBOT_HEIGHT = 0.5;
-const float BOARD_HEIGHT = 0.42;
+const float ABOVE_ROBOT_HEIGHT = 0.35;
+//const float BOARD_PICK_HEIGHT = 0.275;
+//const float BOARD_PLACE_HEIGHT = 0.285;
+const float BOARD_PICK_HEIGHT = 0.285;
+const float BOARD_PLACE_HEIGHT = 0.295;
+
+const float DUMP_BOX_X = 0.55;
+const float DUMP_BOX_Y = 0.41;
 
 
 
@@ -108,10 +114,11 @@ int main(int argc, char** argv){
     ros::init(argc, argv, "chessmate");
     ros::NodeHandle n;
 
-
-    // Test vision is connected or not.
     ros::ServiceClient vision_client = n.serviceClient<chessmate::QueryVisionComponent>("/franka_vision");
     chessmate::QueryVisionComponent vision_srv_request;
+    // uncomment
+    /*
+    // Test vision is connected or not.
     vision_srv_request.request.query_type = "test";
     vision_srv_request.request.last_state_fen_string = fen_string;
     while(!vision_client.call(vision_srv_request)){
@@ -119,7 +126,7 @@ int main(int argc, char** argv){
         ros::Duration(1).sleep();
     }
     ROS_INFO_STREAM("Vision is connected.");
-
+    */
 
     // First, do not give commands to external things.
     PandaJoints neutral_pose;
@@ -165,10 +172,39 @@ int main(int argc, char** argv){
 
     // main control starts here!
     while(true){
+        bool resp;
+        /*
+        std::string dummy_place;
+        std::cout << "Enter a place: ";
+        std::cin >> dummy_place;
+        float height;
+        std::cout << "Enter a height: ";
+        std::cin >> height;
+
+        chess_piece_position_request.request.from_piece = dummy_place;
+        chess_piece_position_request.request.to_piece = dummy_place;
+        chess_piece_position_client.call(chess_piece_position_request);
+        float square_position_x = chess_piece_position_request.response.from_x;
+        float square_position_y = chess_piece_position_request.response.from_y;
+        std::cout << "square_position_x: " << square_position_x << std::endl;
+        std::cout << "square_position_y: " << square_position_y << std::endl;
+        resp = franka_go(go_client, square_position_x, square_position_y, height, false, false, false, true);
+        //resp = joint_client.call(joint_request);
+        if(!resp){
+            ROS_WARN_STREAM("Error in first go request");
+            ros::Duration(0.01).sleep();
+            continue;
+        }
+        ROS_INFO_STREAM("go successfull");
+        continue;
+        */
+
+
+
         ROS_INFO_STREAM("Main loop starts!");
         int a;  
 
-        gripper_move(gripper_client, 0.0, 0.04, 50, false, true, false);
+        //gripper_move(gripper_client, 0.0, 0.04, 50, false, true, false);
         ROS_INFO_STREAM("gripper successfull");
 
        
@@ -177,9 +213,9 @@ int main(int argc, char** argv){
         // error check and cleaning TODO
 
         // Init should be updated as side vision place.
-        bool resp;
-        std::cin >> a;
-        resp = franka_go(go_client, 0, 0, 0, false, false, true);
+        //bool resp;
+        //std::cin >> a;
+        resp = franka_go(go_client, 0, 0, 0, false, false, true, false);
         if (!resp) {
             continue;
         }
@@ -280,7 +316,7 @@ int main(int argc, char** argv){
             /*
                 Here, we need to go top view to get the prediction from top view.
             */
-            resp = franka_go(go_client, 0, 0, 0, false, true, false);
+            resp = franka_go(go_client, 0, 0, 0, false, true, false, false);
             if (!resp) {
                 continue;
             }
@@ -383,23 +419,125 @@ int main(int argc, char** argv){
         }
 
 
-
         std::string take_place_square = chess_next_move.response.from_square;
         std::string put_place_square  = chess_next_move.response.to_square;
 
+        // Otherwise, move the piece to the put place square.
+        
+        float pick_width = 0.0;
+
+        // Now, we have the best move, and we can do something with it!
+        // Call the vision to get the coordinates of these!
+        
+        ros::ServiceClient joint_client = n.serviceClient<franka_msgs::SetChessGoal>("/franka_go_chess");
+        franka_msgs::SetChessGoal joint_request;
+        
+        // go to above of take piece 
+        //joint_request.request.chess_place = take_place_square + "above";
+        ROS_INFO_STREAM("Starting movement!");
+        //std::cin >> a;
+        
+
+        chess_piece_position_request.request.from_piece = take_place_square;
+        chess_piece_position_request.request.to_piece = put_place_square;
+        chess_piece_position_client.call(chess_piece_position_request);
+        float take_place_square_position_x = chess_piece_position_request.response.from_x;
+        float take_place_square_position_y = chess_piece_position_request.response.from_y;
+        float put_place_square_position_x = chess_piece_position_request.response.to_x;
+        float put_place_square_position_y = chess_piece_position_request.response.to_y;
+
+
         // First, we need to look at put place square.
         // If it is full, then we will eat that piece and then do the movement. 
-        bool is_put_place_full = is_square_full(fen_string,put_place_square);
+        bool is_put_place_full = is_square_full(fen_string, put_place_square);
 
-        float pick_width = 0.0;
         if (is_put_place_full) {
-            // TODO , first take other player's piece.
             char piece_to_take = get_piece_to_take(fen_string, put_place_square);
-            
-            ROS_WARN_STREAM("YOU ARE TRYING TO TAKE A PIECE BUT IT IS NOT IMPLEMENTED!");
-            continue;
+            switch(piece_to_take){
+            case 'q':
+            case ('Q'):{
+                ROS_INFO_STREAM("We will take a queen.");
+                pick_width = 0.008;
+                break;
+            }
+            case('k'):
+            case ('K'):{
+                ROS_INFO_STREAM("We will take a king.");
+                pick_width = 0.008;
+                break;
+            }
+            default:{
+                ROS_INFO_STREAM("We will take others.");
+                pick_width = 0.004;
+                break;
+            }
         }
-        // Otherwise, move the piece to the put place square.
+            // TODO , first take other player's piece.
+            //char piece_to_take = get_piece_to_take(fen_string, put_place_square);
+
+
+
+            ROS_INFO_STREAM("Put place is full. We will take the piece and then do the movement.");
+            //std::cin >> a;
+            //joint_request.request.chess_place = put_place_square + "above";
+            //resp = joint_client.call(joint_request);
+            resp = franka_go(go_client, put_place_square_position_x, put_place_square_position_y, ABOVE_ROBOT_HEIGHT, false, false, false, true);
+            if(!resp){
+                ROS_WARN_STREAM("Error in fourth go request");
+                ros::Duration(0.01).sleep();
+                continue;
+            }
+            ROS_INFO_STREAM("foourth go successfull");
+
+
+            gripper_move(gripper_client, 0.04, 0.05, 50, false, true, false);
+            
+            //std::cin >> a;
+            //joint_request.request.chess_place = put_place_square;
+            //resp = joint_client.call(joint_request);
+            resp = franka_go(go_client, put_place_square_position_x, put_place_square_position_y, BOARD_PICK_HEIGHT, false, false, false, false);
+            if(!resp){
+                ROS_WARN_STREAM("Error in fifth go request");
+                ros::Duration(0.01).sleep();
+                continue;
+            }
+            ROS_INFO_STREAM("fifth go successfull");
+
+            //std::cin >> a;
+            gripper_move(gripper_client, pick_width, 0.05, 50, true, false, false);
+            ROS_INFO_STREAM(" gripper pick  successfull");
+            ros::Duration(1).sleep();
+            //std::cin >> a;
+
+            //joint_request.request.chess_place = put_place_square;
+            //resp = joint_client.call(joint_request);
+            resp = franka_go(go_client, put_place_square_position_x, put_place_square_position_y, ABOVE_ROBOT_HEIGHT, false, false, false, false);
+            if(!resp){
+                ROS_WARN_STREAM("Error in above go request");
+                ros::Duration(0.01).sleep();
+                continue;
+            }
+            ROS_INFO_STREAM("above go successfull");
+
+            //std::cin >> a;
+            //joint_request.request.chess_place = put_place_square;
+            //resp = joint_client.call(joint_request);
+            resp = franka_go(go_client, DUMP_BOX_X, DUMP_BOX_Y, ABOVE_ROBOT_HEIGHT, false, false, false, false);
+            if(!resp){
+                ROS_WARN_STREAM("Error in above go request");
+                ros::Duration(0.01).sleep();
+                continue;
+            }
+            ROS_INFO_STREAM("dump above go successfull");
+
+            ROS_INFO_STREAM("DUMPING THE PIECE. ARE YOU READY?");
+            //std::cin >> a;
+
+            gripper_move(gripper_client, 0.04, 0.05, 50, false, true, false);
+            
+            ROS_WARN_STREAM("DUMPED THE PIECE SUCCESSFULLY");
+            //ROS_WARN_STREAM("YOU ARE TRYING TO TAKE A PIECE BUT IT IS NOT IMPLEMENTED!");
+        }
         
         char piece_to_take = get_piece_to_take(fen_string, take_place_square);
         switch(piece_to_take){
@@ -424,30 +562,13 @@ int main(int argc, char** argv){
 
         // Update fen. Because we will play best move.
         fen_string = chess_next_move.response.fen_string;
-        
-        // Now, we have the best move, and we can do something with it!
-        // Call the vision to get the coordinates of these!
-        
-        ros::ServiceClient joint_client = n.serviceClient<franka_msgs::SetChessGoal>("/franka_go_chess");
-        franka_msgs::SetChessGoal joint_request;
-        
-        // go to above of take piece 
-        //joint_request.request.chess_place = take_place_square + "above";
-        ROS_INFO_STREAM("Starting movement!");
-        std::cin >> a;
-        std::cout << "exs";
-        
-        chess_piece_position_request.request.from_piece = take_place_square;
-        chess_piece_position_request.request.to_piece = put_place_square;
-        chess_piece_position_client.call(chess_piece_position_request);
-        float take_place_square_position_x = chess_piece_position_request.response.from_x;
-        float take_place_square_position_y = chess_piece_position_request.response.from_y;
-        float put_place_square_position_x = chess_piece_position_request.response.to_x;
-        float put_place_square_position_y = chess_piece_position_request.response.to_y;
 
-
-
-        resp = franka_go(go_client, take_place_square_position_x, take_place_square_position_y, ABOVE_ROBOT_HEIGHT, false, false, false);
+        if (is_put_place_full){
+            resp = franka_go(go_client, take_place_square_position_x, take_place_square_position_y, ABOVE_ROBOT_HEIGHT, false, false, false, false); 
+        }
+        else{
+            resp = franka_go(go_client, take_place_square_position_x, take_place_square_position_y, ABOVE_ROBOT_HEIGHT, false, false, false, true);
+        }
         //resp = joint_client.call(joint_request);
         if(!resp){
             ROS_WARN_STREAM("Error in first go request");
@@ -457,16 +578,16 @@ int main(int argc, char** argv){
         ROS_INFO_STREAM("go successfull");
         
         // prepare gripper
-        std::cin >> a;
+        //std::cin >> a;
         gripper_move(gripper_client, 0.04, 0.05, 50, false, true, false);
 
         ROS_INFO_STREAM("gripper successfull");
 
         // go to take piece
-        std::cin >> a;
+        //std::cin >> a;
         //joint_request.request.chess_place = take_place_square;
         //resp = joint_client.call(joint_request);
-        resp = franka_go(go_client, take_place_square_position_x, take_place_square_position_y, BOARD_HEIGHT, false, false, false);
+        resp = franka_go(go_client, take_place_square_position_x, take_place_square_position_y, BOARD_PICK_HEIGHT, false, false, false, false);
         if(!resp){
             ROS_WARN_STREAM("Error in sec go request");
             ros::Duration(0.01).sleep();
@@ -475,15 +596,16 @@ int main(int argc, char** argv){
         ROS_INFO_STREAM("sec go successfull");
 
         // pick piece
-        std::cin >> a;
+        //std::cin >> a;
         gripper_move(gripper_client, pick_width, 0.05, 50, true, false, false);
         ROS_INFO_STREAM("sec gripper successfull");
+        ros::Duration(1).sleep();
 
         // lift chess piece
-        std::cin >> a;
+        //std::cin >> a;
         //joint_request.request.chess_place = take_place_square + "above";
         //resp = joint_client.call(joint_request);
-        resp = franka_go(go_client, take_place_square_position_x, take_place_square_position_y, ABOVE_ROBOT_HEIGHT, false, false, false);
+        resp = franka_go(go_client, take_place_square_position_x, take_place_square_position_y, ABOVE_ROBOT_HEIGHT, false, false, false, false);
         if(!resp){
             ROS_WARN_STREAM("Error in thirdy go request");
             ros::Duration(0.01).sleep();
@@ -493,7 +615,7 @@ int main(int argc, char** argv){
 
         /*
         // GO TO INTER
-        std::cin >> a;
+        //std::cin >> a;
         joint_request.request.chess_place = "inter";
         resp = joint_client.call(joint_request);
         if(!resp){
@@ -504,10 +626,10 @@ int main(int argc, char** argv){
         ROS_INFO_STREAM("third go successfull");
         */
 
-        std::cin >> a;
+        //std::cin >> a;
         //joint_request.request.chess_place = put_place_square + "above";
         //resp = joint_client.call(joint_request);
-        resp = franka_go(go_client, put_place_square_position_x, put_place_square_position_y, ABOVE_ROBOT_HEIGHT, false, false, false);
+        resp = franka_go(go_client, put_place_square_position_x, put_place_square_position_y, ABOVE_ROBOT_HEIGHT, false, false, false, false);
         if(!resp){
             ROS_WARN_STREAM("Error in fourth go request");
             ros::Duration(0.01).sleep();
@@ -516,10 +638,10 @@ int main(int argc, char** argv){
         ROS_INFO_STREAM("foourth go successfull");
 
         
-        std::cin >> a;
+        //std::cin >> a;
         //joint_request.request.chess_place = put_place_square;
         //resp = joint_client.call(joint_request);
-        resp = franka_go(go_client, put_place_square_position_x, put_place_square_position_y, BOARD_HEIGHT, false, false, false);
+        resp = franka_go(go_client, put_place_square_position_x, put_place_square_position_y, BOARD_PLACE_HEIGHT, false, false, false, false);
         if(!resp){
             ROS_WARN_STREAM("Error in fifth go request");
             ros::Duration(0.01).sleep();
@@ -527,18 +649,20 @@ int main(int argc, char** argv){
         }
         ROS_INFO_STREAM("fifth go successfull");
 
-        std::cin >> a;
+        //std::cin >> a;
         gripper_move(gripper_client, 0.05, 0.05, 50, false, true, false);
         ROS_INFO_STREAM(" gripper release  successfull");
-        std::cin >> a;
+        //std::cin >> a;
 
 
-
+        
         // Firstly, check whether we won the game or not.
         if (chess_next_move.response.game_state == "win") {
             ROS_INFO_STREAM("We won the game. HRI do happy movement.");
+            break;
             // HRI will do something here.
         }
+
 
 
         // Here we need to check if HRI part or motion planner part completed their movements.
