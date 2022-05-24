@@ -124,7 +124,7 @@ void gripper_move(ros::ServiceClient gripper_client, double width, double speed,
     gripper_client.call(gripper_request);
 }
 
-bool franka_go(ros::ServiceClient go_client, float x, float y, float z, bool is_relative, bool go_to_init, bool go_to_side_vision_init) {
+bool franka_go(ros::ServiceClient go_client, float x, float y, float z, bool is_relative, bool go_to_init, bool go_to_side_vision_init, bool change_orientation_for_picking) {
     bool resp;
     float q_x = -0.9133;
     float q_y = 0.4070;
@@ -141,12 +141,13 @@ bool franka_go(ros::ServiceClient go_client, float x, float y, float z, bool is_
     go_request.request.is_relative = is_relative;
     go_request.request.go_to_init = go_to_init;
     go_request.request.go_to_side_vision_init = go_to_side_vision_init;
+    go_request.request.change_orientation_for_picking = change_orientation_for_picking;
     resp = go_client.call(go_request);
     if(!resp){
         ROS_WARN_STREAM("Error in go to init");
         ros::Duration(0.01).sleep();
         return false;
     }
-    ROS_INFO_STREAM("init go successfull");
+    ROS_INFO_STREAM("franka go successfull");
     return true;
 }
