@@ -8,9 +8,11 @@ from chessmate.srv import QueryVisionComponentResponse, QueryVisionComponent, ge
 from return_codes import *
 from functools import partial
 
-SQUARE_WIDTH = 0.045
-TOP_LEFT_X = 0.6570159050451884
-TOP_LEFT_Y = 0.20263663436491797
+A8_X = 0.6570159050451884
+A8_Y = 0.20263663436491797
+H1_X = 0.32620260
+H1_Y = -0.1092154
+
 side_vision_prev_image = None
 
 
@@ -22,7 +24,7 @@ def camera_release(camera):
 # Since the main loop is in C++, I need to make vision.py a ROS service
 if __name__ == "__main__":
     camera = Camera()
-    coordinate_class = Coordinate(TOP_LEFT_X, TOP_LEFT_Y, SQUARE_WIDTH)
+    coordinate_class = Coordinate(A8_X, A8_Y, H1_X, H1_Y)
     top_vision = TopVision(camera)
     side_vision = SideVision()
     face_tracer = FaceTracer(camera)
