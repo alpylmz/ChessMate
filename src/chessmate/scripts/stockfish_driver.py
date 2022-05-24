@@ -25,7 +25,7 @@ def chess_next_move_func(req):
     _stockfish.make_moves_from_current_position(moves=[best_move])
     print(_stockfish.get_board_visual())
     if _stockfish.get_best_move() is None:
-        return chess_next_moveResponse(1,"","","","win")
+        return chess_next_moveResponse(1,best_move[:2], best_move[2:],"","win")
     else:    
         return chess_next_moveResponse(1, best_move[:2], best_move[2:],_stockfish.get_fen_position(),"continue")
 
