@@ -42,8 +42,10 @@ int main(int argc, char** argv){
     ros::ServiceClient chess_piece_position_client = n.serviceClient<chessmate::getPositionOfPieces>("/get_piece_coordinates");
     chessmate::getPositionOfPieces chess_piece_position_request;
 
+    ros::ServiceClient gripper_client = n.serviceClient<franka_gripper::GripperCommand>("/franka_custom_gripper_service");
 
-    ROS_INFO_STREAM("Main loop starting!");
+    ROS_INFO_STREAM(">------------------------------<");
+    ROS_INFO_STREAM("PICK AND PLACE TEST");
 
      //! going to side vision
     ROS_INFO_STREAM("This test will move robot! Be careful!!");
@@ -91,6 +93,8 @@ int main(int argc, char** argv){
         else{
             ROS_INFO_STREAM("go successfull");
         }
+
+        
 
     }
     
