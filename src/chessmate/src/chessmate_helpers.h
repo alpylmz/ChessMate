@@ -151,3 +151,8 @@ bool franka_go(ros::ServiceClient go_client, float x, float y, float z, bool is_
     ROS_INFO_STREAM("franka go successfull");
     return true;
 }
+
+void m_print(std::string line)
+{
+    std::cout << line << std::endl;
+}
