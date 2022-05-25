@@ -6,8 +6,8 @@ from chessmate.srv import chess_game_state, chess_game_stateResponse
 
 
 # need stockfish binary path!   
-_stockfish = stockfish.Stockfish(path="/home/alp/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64")
-#_stockfish = stockfish.Stockfish(path="/home/dogukan/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64")
+#_stockfish = stockfish.Stockfish(path="/home/alp/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64")
+_stockfish = stockfish.Stockfish(path="/home/dogukan/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64")
 
 
 # Set starting state of the board. 
@@ -57,6 +57,7 @@ def chess_opponent_move_func(req):
 
 
 if __name__ == "__main__":
+    print("this is stockfish driver")
     rospy.init_node("stockfish_driver")
     s = rospy.Service("/chess_next_move", chess_next_move, chess_next_move_func)
 

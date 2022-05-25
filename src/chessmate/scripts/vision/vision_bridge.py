@@ -3,7 +3,7 @@ from camera import Camera
 from coordinate import Coordinate
 from top_vision import TopVision
 from side_vision import SideVision
-from face_tracer import FaceTracer
+#from face_tracer import FaceTracer
 from chessmate.srv import QueryVisionComponentResponse, QueryVisionComponent, getPositionOfPieces, getPositionOfPiecesResponse
 from return_codes import *
 from functools import partial
@@ -25,6 +25,7 @@ def camera_release(camera):
 
 # Since the main loop is in C++, I need to make vision.py a ROS service
 if __name__ == "__main__":
+    print("this is vision bridge")
     coordinate_class = Coordinate(A8_X, A8_Y, H1_X, H1_Y)
 
     # init ros node
@@ -41,19 +42,19 @@ if __name__ == "__main__":
     camera = Camera()
     top_vision = TopVision(camera)
     side_vision = SideVision()
-    face_tracer = FaceTracer(camera)
+    #face_tracer = FaceTracer(camera)
 
 
     # queryvisioncomponent handler, executes vision_system.get_movement()
     def queryvisioncomponent_handler(req):
         global side_vision_prev_image
-        if req.query_type == "get_emotion":
-            return_code = face_tracer.get_emotion()
-            return QueryVisionComponentResponse(return_code,"")
+        #if req.query_type == "get_emotion":
+        #    return_code = face_tracer.get_emotion()
+        #    return QueryVisionComponentResponse(return_code,"")
             
-        if req.query_type == "align_face":
-            return_code = face_tracer.is_face_aligned()
-            return QueryVisionComponentResponse(return_code, "")
+        #if req.query_type == "align_face":
+        #    return_code = face_tracer.is_face_aligned()
+        #    return QueryVisionComponentResponse(return_code, "")
 
         if req.query_type == "test":
             return QueryVisionComponentResponse(1,"")

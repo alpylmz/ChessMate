@@ -164,7 +164,7 @@ class Difference():
 
 
 
-                if difference_score > 0.90:
+                if difference_score > 0.87:
                     cv2.putText(img=square_image,
                                 text="Empty",
                                 org=(0,0),
@@ -206,7 +206,7 @@ class Difference():
                 color_image = np.asanyarray(color_frame.get_data())
                 #square_width, square_height, x_pixel, y_pixel = self.find_corners(color_image)
                 #print(square_width, square_height, x_pixel, y_pixel)
-                square_width, square_height, x_pixel, y_pixel = 46,46,132,48
+                square_width, square_height, x_pixel, y_pixel = 45,45,173,45
                 # #
                 # if square_width < 20 or square_height < 20 or abs(square_width - square_height) > 5 :
                 #     continue

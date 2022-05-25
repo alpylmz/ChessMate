@@ -61,11 +61,11 @@ const int LOSS=100003;
 const int IDLE=100004;
 /* Arduino driver return codes */
 
-const float ABOVE_ROBOT_HEIGHT = 0.35;
+const float ABOVE_ROBOT_HEIGHT = 0.37;
 //const float BOARD_PICK_HEIGHT = 0.275;
 //const float BOARD_PLACE_HEIGHT = 0.285;
 const float BOARD_PICK_HEIGHT = 0.285;
-const float BOARD_PLACE_HEIGHT = 0.295;
+const float BOARD_PLACE_HEIGHT = 0.290;
 
 const float DUMP_BOX_X = 0.55;
 const float DUMP_BOX_Y = 0.41;
@@ -395,6 +395,7 @@ int main(int argc, char** argv){
             //trajectory_client.call(trajectory_request);
             // HRI will do something here.
             //continue;
+            continue;
         }
 
         else if (chess_opponent_move.response.game_state == "lose") {
@@ -544,13 +545,13 @@ int main(int argc, char** argv){
             case 'q':
             case ('Q'):{
                 ROS_INFO_STREAM("We will take a queen.");
-                pick_width = 0.01;
+                pick_width = 0.008;
                 break;
             }
             case('k'):
             case ('K'):{
                 ROS_INFO_STREAM("We will take a king.");
-                pick_width = 0.01;
+                pick_width = 0.008;
                 break;
             }
             default:{

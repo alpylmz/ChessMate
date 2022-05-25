@@ -4,7 +4,7 @@ import re
 from tkinter.tix import X_REGION
 from cv2 import circle
 import numpy as np
-
+import os
 
 import cv2
 from board_localization import BoardLocalization
@@ -80,7 +80,7 @@ class Board(BoardLocalization):
 
     def paint(self , squarest , img , inde):
 
-        corners = np.array([[198,68] , [495,54] , [533,359] , [157,361] ])
+        corners = np.array([[198,65] , [496,52] , [531,358] , [157,357] ])
         #corners = self.GetCorners(img)
         h_edges,v_edges = self.GetEdges(corners)
         rows = self.GetSquares(v_edges)
@@ -105,13 +105,14 @@ class Board(BoardLocalization):
             for i in square:
                 cv2.circle(img,i,5,(k,k,0),1)
                 k+=40
-        cv2.imwrite("images/" + str(inde) +".png",img)
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        #cv2.imwrite(current_dir + "/images/" + str(inde) +".png",img)
 
     def CalculateSquareColors(self,img ):
         
   
   
-        corners = np.array([[198,68] , [495,54] , [533,359] , [157,361]])
+        corners = np.array([[198,65] , [496,52] , [531,358] , [157,357]])
         #corners = self.GetCorners(img)
         h_edges,v_edges = self.GetEdges(corners)
         rows = self.GetSquares(v_edges)
@@ -137,7 +138,8 @@ class Board(BoardLocalization):
             for i in square:
                 cv2.circle(img,i,5,(k,k,0),1)
                 k+=40
-        cv2.imwrite("0.png",img)
+        current_dir = os.path.dirname(os.path.realpath(__file__))        
+        #cv2.imwrite(current_dir + "/0.png",img)
 
         
         

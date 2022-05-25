@@ -59,6 +59,7 @@ def rospy_service_callback(req):
 
 
 if __name__ == '__main__':
+    print("this is arduino driver")
     # rospy create node
     rospy.init_node('arduino_driver')
     # create service "/chess_clock"
