@@ -29,7 +29,7 @@
 #include "franka_msgs/HRI.h"
 #include "franka_gripper/GripperCommand.h"
 
-std::string fen_string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b - - 0 1";
+std::string fen_string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b -ah - 0 1";
 
 /* Vision function return codes */
 const int CHESSBOARD_NOT_DETECTED=0;
