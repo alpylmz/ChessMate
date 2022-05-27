@@ -62,8 +62,36 @@ class TopVision():
         return column + f'{row}'
 
 
+    def is_castling_happened(self,last_state, current_state):
+        number_of_differences = 0
+        for i in range(8):
+            for j in range(8):
+                if last_state[i][j] != current_state[i][j]:
+                    number_of_differences += 1
+
+        if number_of_differences == 4:
+            if last_state[0][0] == 'F' and current_state[0][0] == 'E' and \
+                    last_state[0][2] == 'E' and current_state[0][2] == 'F' and \
+                    last_state[0][3] == 'E' and current_state[0][3] == 'F' and \
+                    last_state[0][4] == 'F' and current_state[0][4] == 'E':
+                return True, "e8c8"
+
+            if last_state[0][4] == 'F' and current_state[0][4] == 'E' and \
+                    last_state[0][5] == 'E' and current_state[0][5] == 'F' and \
+                    last_state[0][6] == 'E' and current_state[0][6] == 'F' and \
+                    last_state[0][7] == 'F' and current_state[0][7] == 'E':
+                return True, "e8g8"
+
+        return False, ""
+
+
+
 
     def decide_movement_with_comparing_states(self,last_state, current_state):
+        is_castling, movement = self.is_castling_happened(last_state,current_state)
+        if is_castling:
+            return 2,movement
+
         first_square = str()
         second_square = str()
         number_of_differences = 0
