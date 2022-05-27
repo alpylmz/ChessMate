@@ -1,13 +1,13 @@
-from cgi import test
-from cmath import sqrt
 import re
-from tkinter.tix import X_REGION
-from cv2 import circle
 import numpy as np
 import os
-
 import cv2
+from cgi import test
+from cmath import sqrt
 from board_localization import BoardLocalization
+from tkinter.tix import X_REGION
+from cv2 import circle
+from vision_calibration_parameters import *
 
 
 class Board(BoardLocalization):
@@ -80,7 +80,7 @@ class Board(BoardLocalization):
 
     def paint(self , squarest , img , inde):
 
-        corners = np.array([[198,65] , [496,52] , [531,358] , [157,357] ])
+        corners = np.array([SIDE_VISION_TOP_LEFT, SIDE_VISION_TOP_RIGHT, SIDE_VISION_BOTTOM_RIGHT, SIDE_VISION_BOTTOM_LEFT])
         #corners = self.GetCorners(img)
         h_edges,v_edges = self.GetEdges(corners)
         rows = self.GetSquares(v_edges)
@@ -112,7 +112,7 @@ class Board(BoardLocalization):
         
   
   
-        corners = np.array([[198,65] , [496,52] , [531,358] , [157,357]])
+        corners = np.array([SIDE_VISION_TOP_LEFT, SIDE_VISION_TOP_RIGHT, SIDE_VISION_BOTTOM_RIGHT, SIDE_VISION_BOTTOM_LEFT])
         #corners = self.GetCorners(img)
         h_edges,v_edges = self.GetEdges(corners)
         rows = self.GetSquares(v_edges)
