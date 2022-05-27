@@ -21,7 +21,12 @@ _stockfish.set_skill_level(SKILL_LEVEL)
 
 def chess_next_move_func(req):
     global _stockfish
-    best_move = _stockfish.get_best_move()
+    best_move = ""
+    top_moves = _stockfish.get_top_moves(10)
+    for move in top_moves:
+        if len(move['Move']) == 4:
+            best_move = move['Move']
+            break
     _stockfish.make_moves_from_current_position(moves=[best_move])
     print(_stockfish.get_board_visual())
     if _stockfish.get_best_move() is None:
