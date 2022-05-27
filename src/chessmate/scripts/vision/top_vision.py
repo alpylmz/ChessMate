@@ -7,6 +7,7 @@ from skimage.metrics import structural_similarity
 from return_codes import *
 from stockfish import Stockfish
 from camera import Camera
+from vision_calibration_parameters import *
 
 #### STOCKFISH executable path ####
 STOCKFISH_PATH = "/home/dogukan/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64"
@@ -261,8 +262,7 @@ class TopVision():
                     continue
 
                 color_frame, depth_frame, depth_scale = self.camera.GetImage()
-                #square_width, square_height, x_pixel, y_pixel = self.find_corners(color_frame)
-                square_width, square_height, x_pixel, y_pixel = 45,45,173,45 ### OVERWRITING IT FOR NOW!!!
+                square_width, square_height, x_pixel, y_pixel = TOP_VISION_SQUARE_WIDTH,TOP_VISION_SQUARE_HEIGHT,TOP_VISION_SQUARE_X_PIXEL,TOP_VISION_SQUARE_Y_PIXEL                                                                        
     
 
 
