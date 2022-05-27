@@ -1,4 +1,6 @@
 import rospy
+import cv2
+import os
 from camera import Camera
 from coordinate import Coordinate
 from top_vision import TopVision
@@ -14,7 +16,9 @@ H1_X = 0.3984956529830614
 H1_Y = -0.10476628814960992
 
 
-
+current_dir = os.path.dirname(os.path.realpath(__file__))
+MISPREDICTED_IMAGE_PATH = current_dir + "/mispredicted_images/"
+mispredicted_image_counter = 0
 side_vision_prev_image = None
 
 
@@ -48,6 +52,8 @@ if __name__ == "__main__":
     # queryvisioncomponent handler, executes vision_system.get_movement()
     def queryvisioncomponent_handler(req):
         global side_vision_prev_image
+        global MISPREDICTED_IMAGE_PATH
+        global mispredicted_image_counter
         #if req.query_type == "get_emotion":
         #    return_code = face_tracer.get_emotion()
         #    return QueryVisionComponentResponse(return_code,"")
@@ -66,10 +72,19 @@ if __name__ == "__main__":
         if req.query_type == "side":
             current_image,_,_ = camera.GetImage()
             return_code, movement_in_fen = side_vision.get_movement(current_image,side_vision_prev_image,req.last_state_fen_string)
+            if return_code == SIDE_VISION_UNSUCCESS:
+                cv2.imwrite(MISPREDICTED_IMAGE_PATH + "/image-" + str(mispredicted_image_counter) + ".png", side_vision_prev_image)
+                mispredicted_image_counter += 1
+                cv2.imwrite(MISPREDICTED_IMAGE_PATH + "/image-" + str(mispredicted_image_counter) + ".png", current_image)
+                mispredicted_image_counter += 1
+
 
         if req.query_type == "top":
+            current_image,_,_ = camera.GetImage()
             return_code, movement_in_fen = top_vision.get_movement(req.last_state_fen_string)
-
+            if return_code != TWO_DIFFERENCE_DETECTED:
+                cv2.imwrite(MISPREDICTED_IMAGE_PATH + "/image-" + str(mispredicted_image_counter) + ".png", current_image)
+                mispredicted_image_counter += 1
 
 
         return QueryVisionComponentResponse(return_code, movement_in_fen)
