@@ -10,10 +10,11 @@ from chessmate.srv import QueryVisionComponentResponse, QueryVisionComponent, ge
 from return_codes import *
 from functools import partial
 
-A8_X = 0.7187915752571079
-A8_Y = 0.22051247797150725
-H1_X = 0.3984956529830614
-H1_Y = -0.10476628814960992
+A8_X = 0.7180264563402445
+A8_Y = 0.21940773651391163
+H1_X = 0.3987680070603306
+H1_Y = -0.10025170642409935
+
 
 
 current_dir = os.path.dirname(os.path.realpath(__file__))

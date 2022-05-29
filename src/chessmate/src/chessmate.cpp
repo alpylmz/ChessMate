@@ -29,7 +29,7 @@
 #include "franka_msgs/HRI.h"
 #include "franka_gripper/GripperCommand.h"
 
-std::string fen_string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b -ah - 0 1";
+std::string fen_string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1";
 
 /* Vision function return codes */
 const int CHESSBOARD_NOT_DETECTED=0;
@@ -52,7 +52,7 @@ const int NEUTRAL_FACE=17000;
 /* Vision function return codes */
 
 
-const float ARDUINO_CHECK_SLEEP = 1.0;
+const float ARDUINO_CHECK_SLEEP = 2.0;
 /* Arduino driver return codes */
 const int ROBOT_PLAY=100000;
 const int OPPONENT_PLAY=100001;
@@ -80,7 +80,7 @@ const float DUMP_BOX_Y = 0.41;
     @param hri_client HRI service client
     @return FollowJointTrajectoryGoal resulting trajectory
 */
-control_msgs::FollowJointTrajectoryGoal get_HRI_trajectory(float game_status, bool breath, ros::ServiceClient& hri_client)
+void get_HRI_trajectory(float game_status, bool breath, ros::ServiceClient& hri_client)
 {
     //call this function to get the trajectory
     franka_msgs::HRI hri_srv_request;
@@ -90,12 +90,13 @@ control_msgs::FollowJointTrajectoryGoal get_HRI_trajectory(float game_status, bo
     bool resp;
     resp = hri_client.call(hri_srv_request);
 
-    std::cout << "HRI service returned " << resp << std::endl;
+    //std::cout << "HRI service returned " << resp << std::endl;
+    ROS_INFO_STREAM("HRI service returned");
 
-    control_msgs::FollowJointTrajectoryGoal result_joint_traj = hri_srv_request.response.trajGoal;
+    //control_msgs::FollowJointTrajectoryGoal result_joint_traj = hri_srv_request.response.trajGoal;
 
     //retuns the wanted joint trajectory
-    return result_joint_traj;
+   return;
 }
 
 float get_win_chance(ros::ServiceClient& chess_game_state_client)
@@ -167,9 +168,11 @@ int main(int argc, char** argv){
     //! example call to hri func
     // control_msgs::FollowJointTrajectoryGoal trajectory_to_follow = get_HRI_trajectory(game_status, want_to_breath, hri_client);
 
+
+
     ROS_INFO_STREAM("Main loop starting!");
-
-
+    bool first_loop = true;
+    
     // main control starts here!
     while(true){
         bool resp;
@@ -219,6 +222,11 @@ int main(int argc, char** argv){
         if (!resp) {
             continue;
         }
+        if(first_loop)
+        {
+            get_HRI_trajectory(0.6, false, hri_client);
+            first_loop = false;
+        }
 
 
         /* Here, go to side vision place.*/
@@ -258,6 +266,8 @@ int main(int argc, char** argv){
                 ros::Duration(ARDUINO_CHECK_SLEEP).sleep();
                 break;
             case OPPONENT_PLAY:
+                get_HRI_trajectory(0.0, true, hri_client);
+                break;
             case IDLE:
                 ros::Duration(ARDUINO_CHECK_SLEEP).sleep();
                 break;

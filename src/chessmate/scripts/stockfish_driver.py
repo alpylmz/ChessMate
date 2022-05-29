@@ -11,7 +11,7 @@ _stockfish = stockfish.Stockfish(path="/home/dogukan/Downloads/stockfish_14.1_li
 
 
 # Set starting state of the board. 
-INITIAL_FEN_STRING = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b -ah - 0 1"
+INITIAL_FEN_STRING = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1"
 _stockfish.set_fen_position(INITIAL_FEN_STRING)
 
 # Skill level

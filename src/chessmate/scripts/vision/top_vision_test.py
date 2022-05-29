@@ -42,7 +42,7 @@ class Difference():
             for j in range(8):
                 empty_image = board_image[y_pixel + int(square_height) * i + offset: y_pixel + int(square_height) * (i + 1) - offset,
                                   x_pixel + int(square_width) * j + offset: x_pixel + int(square_width) * (j + 1) - offset]
-                #cv2.imwrite(EMPTY_IMAGE_PATH + str(i) + str(j) + ".png",empty_image)
+                cv2.imwrite(EMPTY_IMAGE_PATH + str(i) + str(j) + ".png",empty_image)
                 cv2.rectangle(board_image,
                               (x_pixel + int(square_width) * j + offset, y_pixel + int(square_height) * i + offset),
                               (x_pixel + int(square_width) * (j + 1) - offset, y_pixel + int(square_height) * (i + 1) - offset),
@@ -206,7 +206,7 @@ class Difference():
                 color_image = np.asanyarray(color_frame.get_data())
                 #square_width, square_height, x_pixel, y_pixel = self.find_corners(color_image)
                 #print(square_width, square_height, x_pixel, y_pixel)
-                square_width, square_height, x_pixel, y_pixel = 45,45,173,45
+                square_width, square_height, x_pixel, y_pixel = 45,45,171,38
                 # #
                 # if square_width < 20 or square_height < 20 or abs(square_width - square_height) > 5 :
                 #     continue
@@ -214,7 +214,7 @@ class Difference():
 
 
 
-                self.get_empty_full_information(color_image, square_width, square_height, x_pixel, y_pixel)
+                #self.get_empty_full_information(color_image, square_width, square_height, x_pixel, y_pixel)
                 #self.generate_empty_squares(color_image, square_width, square_height, x_pixel, y_pixel)
 
 
