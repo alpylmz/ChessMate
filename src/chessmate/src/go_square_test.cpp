@@ -31,6 +31,7 @@
 
 
 int main(int argc, char** argv){
+    bool resp;
 
     ros::init(argc, argv, "chessmate");
     ros::NodeHandle n;
@@ -51,27 +52,32 @@ int main(int argc, char** argv){
     ROS_INFO_STREAM("This test will move robot! Be careful!!");
     ROS_INFO_STREAM("Going to side vision position!!");
     ROS_INFO_STREAM("Give random input to start:");
-    int a;
+    std::string a = "";
+
     std::cin >> a;
+    
+    ROS_INFO_STREAM("Going to side vision position!!");
+
     resp = franka_go(go_client, 0, 0, 0, false, false, true, false);
     if (!resp) {
         ROS_WARN_STREAM("ERROR IN GOING TO INIT!");
-        return;
+        return 0;
     }
 
+    std::string dummy_place = "";
+    
     
     // main control starts here!
     while(true){
 
-        bool resp;
-        
-        std::string dummy_place;
         std::cout << "Enter a square to go: ";
         std::cin >> dummy_place;
+        
+        //getline(std::cin,dummy_place);
         float height;
         std::cout << "Enter a height: ";
         std::cin >> height;
-
+        
         chess_piece_position_request.request.from_piece = dummy_place;
         chess_piece_position_request.request.to_piece = dummy_place;
 

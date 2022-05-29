@@ -4,7 +4,7 @@
 
 #include "chessmate/helper.hpp"
 #include "chessmate_helpers.h"
-
+#include <stdlib.h>
 // messages
 #include "chessmate/pose.h"
 
@@ -70,7 +70,7 @@ const float BOARD_PLACE_HEIGHT = 0.290;
 const float DUMP_BOX_X = 0.55;
 const float DUMP_BOX_Y = 0.41;
 
-
+bool definitely_lose = false;
 
 /** get_HRI_trajectory():    
     returns HRI trajectory with respect to the game state
@@ -80,12 +80,11 @@ const float DUMP_BOX_Y = 0.41;
     @param hri_client HRI service client
     @return FollowJointTrajectoryGoal resulting trajectory
 */
-void get_HRI_trajectory(float game_status, bool breath, ros::ServiceClient& hri_client)
+void get_HRI_trajectory(std::string move, ros::ServiceClient& hri_client)
 {
     //call this function to get the trajectory
     franka_msgs::HRI hri_srv_request;
-    hri_srv_request.request.breathing = breath;
-    hri_srv_request.request.game_status = game_status;
+    hri_srv_request.request.move = move;
     
     bool resp;
     resp = hri_client.call(hri_srv_request);
@@ -99,15 +98,65 @@ void get_HRI_trajectory(float game_status, bool breath, ros::ServiceClient& hri_
    return;
 }
 
-float get_win_chance(ros::ServiceClient& chess_game_state_client)
+void random_hri_move(ros::ServiceClient& hri_client)
+{   
+    ROS_WARN_STREAM("RANDOM HRI MOVEMENT");
+
+    if(!definitely_lose)
+    {
+        int rnd = rand() % 3;
+        switch (rnd)
+        {
+        case 0:
+            get_HRI_trajectory("think", hri_client);
+            break;
+        case 1:
+            get_HRI_trajectory("positive", hri_client);
+            break;
+        case 2:
+            get_HRI_trajectory("hesitation", hri_client);
+            break;
+        default:
+            break;
+        }  
+    }
+    else
+    {
+        int rnd = rand() % 4;
+        switch (rnd)
+        {
+        case 0:
+            get_HRI_trajectory("think", hri_client);
+            break;
+        case 1:
+            get_HRI_trajectory("positive", hri_client);
+            break;
+        case 2:
+            get_HRI_trajectory("hesitation", hri_client);
+            break;
+        case 3:
+            get_HRI_trajectory("mock", hri_client);
+            break;
+        default:
+            break;
+        }  
+    }
+    
+}
+
+int get_lose_chance(ros::ServiceClient& chess_game_state_client)
 {
     chessmate::chess_game_state chess_game_state;
     bool resp;
     resp = chess_game_state_client.call(chess_game_state);
 
     std::cout << "Game state service is returned " << resp << std::endl;
+    
+    std::cout << "win " << chess_game_state.response.win << std::endl;
+    std::cout << "draw " << chess_game_state.response.draw << std::endl;
+    std::cout << "lose " << chess_game_state.response.lose << std::endl;
 
-    return ((float)chess_game_state.response.win / 1000.0f);
+    return chess_game_state.response.lose;
 }
 
 int main(int argc, char** argv){
@@ -172,7 +221,8 @@ int main(int argc, char** argv){
 
     ROS_INFO_STREAM("Main loop starting!");
     bool first_loop = true;
-    
+    float rec_opponent_win_prob = 0.5f;
+    int no_hri_counter = 0;
     // main control starts here!
     while(true){
         bool resp;
@@ -224,8 +274,13 @@ int main(int argc, char** argv){
         }
         if(first_loop)
         {
-            get_HRI_trajectory(0.6, false, hri_client);
-            first_loop = false;
+            /*while(true)
+            {
+                random_hri_move(hri_client);
+            }*/
+
+            get_HRI_trajectory("salut", hri_client);
+            first_loop = false;        
         }
 
 
@@ -266,7 +321,7 @@ int main(int argc, char** argv){
                 ros::Duration(ARDUINO_CHECK_SLEEP).sleep();
                 break;
             case OPPONENT_PLAY:
-                get_HRI_trajectory(0.0, true, hri_client);
+                get_HRI_trajectory("breath", hri_client);
                 break;
             case IDLE:
                 ros::Duration(ARDUINO_CHECK_SLEEP).sleep();
@@ -274,11 +329,17 @@ int main(int argc, char** argv){
                 
             case WIN:
                 /* code */
+                get_HRI_trajectory("win", hri_client);
+
                 ROS_ERROR_STREAM("You win!");
+                return 0;
                 break;
             case LOSS:
                 /* code */
+                get_HRI_trajectory("lose", hri_client);
+
                 ROS_ERROR_STREAM("You lose!");
+                return 0;
                 break;
             default:
                 break;
@@ -297,13 +358,14 @@ int main(int argc, char** argv){
         vision_srv_request.request.query_type = "side";
         resp = vision_client.call(vision_srv_request);
 
-
+        
         if(!resp){
             ROS_WARN_STREAM("Vision is not connected to system!");
             ros::Duration(1).sleep();
         } else{
             
             int return_code = vision_srv_request.response.return_code;
+            std::string rspns;
 
 
             switch (return_code) {
@@ -311,6 +373,12 @@ int main(int argc, char** argv){
                     ROS_WARN_STREAM("Side vision is successfull.");
                     movement_in_fen = vision_srv_request.response.movement_in_fen;
                     std::cout << "Detected movement is : " << movement_in_fen << std::endl;
+                    std::cout << "Please confirm y or n" << std::endl;
+                    std::cin >> rspns;
+                    if(rspns != "y")
+                    {
+                        movement_in_fen = "";
+                    }
                     break;
                 case SIDE_VISION_UNSUCCESS:
                     ROS_WARN_STREAM("Side vision is unsuccessfull.");
@@ -400,6 +468,8 @@ int main(int argc, char** argv){
         // If player cheats, do something.
         if (chess_opponent_move.response.fen_string == "cheat") {
             ROS_INFO_STREAM("Cheat detected. HRI do angry movement.");
+            get_HRI_trajectory("nod", hri_client);
+
             //auto trajectory = get_HRI_trajectory(0.0, false ,hri_client);
             //trajectory_request.request.trajGoal = trajectory;
             //trajectory_client.call(trajectory_request);
@@ -410,6 +480,8 @@ int main(int argc, char** argv){
 
         else if (chess_opponent_move.response.game_state == "lose") {
             ROS_INFO_STREAM("We lost the game. HRI do sad movement.");
+            get_HRI_trajectory("lose", hri_client);
+            return 0;
             // HRI will do something here.
         }
 
@@ -440,8 +512,32 @@ int main(int argc, char** argv){
         // Now, we have the best move, and we can do something with it!
         // Call the vision to get the coordinates of these!
         
-        ros::ServiceClient joint_client = n.serviceClient<franka_msgs::SetChessGoal>("/franka_go_chess");
-        franka_msgs::SetChessGoal joint_request;
+        //! HRI DECIDE MOVEMENT
+
+        int opponent_lose_prob = get_lose_chance(chess_game_state_client);
+
+        if(opponent_lose_prob > 900 && !definitely_lose)
+        {
+            definitely_lose = true;
+            get_HRI_trajectory("mock",hri_client);
+        }
+        else
+        {
+            if(no_hri_counter == 1)
+            {
+                random_hri_move(hri_client);
+                no_hri_counter = 0;
+            }
+            else
+            {
+                no_hri_counter++;
+            }
+        }
+
+        
+
+
+        //!-----------------------
         
         // go to above of take piece 
         //joint_request.request.chess_place = take_place_square + "above";
@@ -670,7 +766,9 @@ int main(int argc, char** argv){
         // Firstly, check whether we won the game or not.
         if (chess_next_move.response.game_state == "win") {
             ROS_INFO_STREAM("We won the game. HRI do happy movement.");
-            break;
+            get_HRI_trajectory("win", hri_client);
+            return 0;
+            
             // HRI will do something here.
         }
 

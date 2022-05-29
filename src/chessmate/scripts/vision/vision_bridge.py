@@ -10,10 +10,15 @@ from chessmate.srv import QueryVisionComponentResponse, QueryVisionComponent, ge
 from return_codes import *
 from functools import partial
 
-A8_X = 0.7180264563402445
-A8_Y = 0.21940773651391163
-H1_X = 0.3987680070603306
-H1_Y = -0.10025170642409935
+A1_X = 0.4014470920338918
+A1_Y = 0.22229826375982784
+A8_X = 0.7272811452210761
+A8_Y = 0.22010953155514001
+H1_X = 0.40305517526720513
+H1_Y = -0.09984058193422411
+H8_X = 0.7263877184058034
+H8_Y = -0.10278467775327396
+
 
 
 
@@ -31,9 +36,9 @@ def camera_release(camera):
 # Since the main loop is in C++, I need to make vision.py a ROS service
 if __name__ == "__main__":
     print("this is vision bridge")
-    coordinate_class = Coordinate(A8_X, A8_Y, H1_X, H1_Y)
+    coordinate_class = Coordinate(A1_X, A1_Y, A8_X, A8_Y, H1_X, H1_Y, H8_X, H8_Y)
 
-    # init ros node
+    # init ros node8
     rospy.init_node('vision_bridge')
 
     def getPieceCoordinates(req):
