@@ -6,10 +6,11 @@ from coordinate import Coordinate
 from top_vision import TopVision
 from side_vision import SideVision
 #from face_tracer import FaceTracer
-from chessmate.srv import QueryVisionComponentResponse, QueryVisionComponent, getPositionOfPieces, getPositionOfPiecesResponse ,readFinger , readFingerResponse
+from chessmate.srv import QueryVisionComponentResponse, QueryVisionComponent, getPositionOfPieces, getPositionOfPiecesResponse 
+#from chessmate.srv import readFinger , readFingerResponse
 from return_codes import *
 from functools import partial
-from fingerReader import fingerReader
+#from fingerReader import fingerReader
 
 A1_X = 0.4014470920338918
 A1_Y = 0.22229826375982784
@@ -53,15 +54,15 @@ if __name__ == "__main__":
     camera = Camera()
     top_vision = TopVision(camera)
     side_vision = SideVision()
-    finger_reader = fingerReader()
+    #finger_reader = fingerReader()
     #face_tracer = FaceTracer(camera)
 
 
-	rospy.Service("/read_fingers",readFinger , readFinger)
-	
-	def readFinger(req):
-        finger = finger_reader(camera.GetImage())
-        return readFingerResponse(finger)
+    #rospy.Service("/read_fingers",readFinger , readFinger)
+
+    #def readFinger(req):
+    #    finger = finger_reader(camera.GetImage())
+    #    return readFingerResponse(finger)
 
     # queryvisioncomponent handler, executes vision_system.get_movement()
     def queryvisioncomponent_handler(req):
