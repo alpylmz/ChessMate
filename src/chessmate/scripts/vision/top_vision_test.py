@@ -1,48 +1,46 @@
 import cv2
 import pyrealsense2 as real_sense
 import numpy as np
+import copy
 import os
+from beepy import beep
 from skimage.metrics import structural_similarity
-
+from datetime import datetime
+from Camera import Camera
 
 
 # get current directory
 current_dir = os.path.dirname(os.path.realpath(__file__))
-EMPTY_IMAGE_PATH = current_dir + "/monopol-square-photos/"
 
+EMPTY_IMAGE_PATH = current_dir + "/monopol-square-photos/"
+TEST_PATH = current_dir + "/monopol-test-photos/"
 
 
 class Difference():
 
-    def __init__(self):
-        self.pipeline = real_sense.pipeline()
-        self.config = real_sense.config()
-
-        pipeline_wrapper = real_sense.pipeline_wrapper(self.pipeline)
-        pipeline_profile = self.config.resolve(pipeline_wrapper)
-        device = pipeline_profile.get_device()
-
-        self.config.enable_stream(real_sense.stream.color, 640, 480, real_sense.format.bgr8, 30)
-
-        profile = self.pipeline.start(self.config)
-
-        self.depth_scale = profile.get_device().first_depth_sensor().get_depth_scale()
-
-        self.align_stream = real_sense.align(real_sense.stream.color)
+    def __init__(self,camera_object):
+        self.camera = camera_object
         self.square_information = np.ones((8, 8), dtype=str)
         self.empty_images_array = np.ones((8, 8), dtype=list)
         self.read_empty_images()
+        self.square_width = 45
+        self.square_height = 45
+        self.x_pixel = 173
+        self.y_pixel = 45
 
 
 
-    def generate_empty_squares(self,board_image, square_width, square_height, x_pixel, y_pixel):
+    def generate_empty_squares(self,board_image, square_width, square_height, x_pixel, y_pixel,is_generate):
         print("Generated.")
         offset = 7
         for i in range(8):
             for j in range(8):
                 empty_image = board_image[y_pixel + int(square_height) * i + offset: y_pixel + int(square_height) * (i + 1) - offset,
                                   x_pixel + int(square_width) * j + offset: x_pixel + int(square_width) * (j + 1) - offset]
-                cv2.imwrite(EMPTY_IMAGE_PATH + str(i) + str(j) + ".png",empty_image)
+
+                if is_generate:
+                    cv2.imwrite(EMPTY_IMAGE_PATH + str(i) + str(j) + ".png",empty_image)
+
                 cv2.rectangle(board_image,
                               (x_pixel + int(square_width) * j + offset, y_pixel + int(square_height) * i + offset),
                               (x_pixel + int(square_width) * (j + 1) - offset, y_pixel + int(square_height) * (i + 1) - offset),
@@ -113,7 +111,7 @@ class Difference():
 
         l_x = int(l_x)
         u_y = int(u_y)
-        width =  int(width)
+        width = int(width)
         height = int(height)
         cv2.rectangle(image, (l_x, u_y), (l_x + width, u_y + height), (255, 255, 255), 1)
 
@@ -174,8 +172,7 @@ class Difference():
                                 thickness=1
                                 )
                     self.square_information[i][j] = 'E'
-                    print(difference_score)
-
+                    #print(difference_score)
                 else:
                     cv2.putText(img=square_image,
                                 text="Full",
@@ -186,58 +183,57 @@ class Difference():
                                 thickness=1
                                 )
                     self.square_information[i][j] = 'F'
-                    #print(difference_score)
+                    print(difference_score)
 
+
+
+    def is_time_passed(self,past_time,time):
+        now = datetime.now()
+        if (now - past_time).total_seconds() > time:
+            return True
+
+        return False
 
 
     def start(self):
+        past_time = datetime.now()
+        COUNTER = 200
         try:
             while True:
-                frames = self.pipeline.wait_for_frames()
-                aligned_frames = self.align_stream.process(frames)
-
-
-                color_frame = aligned_frames.get_color_frame()
-
-                if not color_frame:
-                    continue
-
-
-                color_image = np.asanyarray(color_frame.get_data())
-                #square_width, square_height, x_pixel, y_pixel = self.find_corners(color_image)
-                #print(square_width, square_height, x_pixel, y_pixel)
-                square_width, square_height, x_pixel, y_pixel = 45,45,171,38
-                # #
-                # if square_width < 20 or square_height < 20 or abs(square_width - square_height) > 5 :
-                #     continue
-
-
-
-
-                #self.get_empty_full_information(color_image, square_width, square_height, x_pixel, y_pixel)
-                #self.generate_empty_squares(color_image, square_width, square_height, x_pixel, y_pixel)
+                color_image, depth_frame, depth_scale = self.camera.GetImage()
+                #color_image = cv2.imread(TEST_PATH + "image-" + str(COUNTER) + ".png")
+                #self.square_width, self.square_height, self.x_pixel, self.y_pixel = self.find_corners(color_image)
+                #self.square_width, self.square_height, self.x_pixel, self.y_pixel = 45,45,193,52
+                #self.get_empty_full_information(color_image, self.square_width, self.square_height, self.x_pixel, self.y_pixel)
+                self.generate_empty_squares(color_image, self.square_width, self.square_height, self.x_pixel, self.y_pixel,False)
 
 
                 key = cv2.waitKey(1)
+                if key & 0xFF == ord('c'):
+                    [self.square_width, self.square_height, self.x_pixel, self.y_pixel] = [int(x) for x in input().split()]
+
+
                 if key & 0xFF == ord('g'):
-                    self.generate_empty_squares(color_image,square_width,square_height,x_pixel,y_pixel)
+                    self.generate_empty_squares(color_image,square_width,square_height,x_pixel,y_pixel,True)
 
 
                 if key & 0xFF == ord('q') or key == 27:
                     cv2.destroyAllWindows()
                     break
 
+
                 cv2.imshow('Image', color_image)
 
 
         finally:
-            self.pipeline.stop()
+            self.camera.stop()
 
 
 
 
 if __name__ == "__main__":
-    detect_differences = Difference()
+    camera = Camera()
+    detect_differences = Difference(camera)
     detect_differences.start()
 
 
