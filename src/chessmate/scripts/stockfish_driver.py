@@ -20,7 +20,7 @@ print("initialized fen string")
 
 print("initializing skill level")
 # Skill level
-SKILL_LEVEL = 1
+SKILL_LEVEL = 20
 try:
     _stockfish.set_skill_level(SKILL_LEVEL)
     #_stockfish.update_engine_parameters({"Hash": 2048, "UCI_Chess960": "true","Skill Level": 1}) # Gets stockfish to use a 2GB hash table, and also to play Chess960.

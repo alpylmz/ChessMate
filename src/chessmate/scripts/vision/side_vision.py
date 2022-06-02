@@ -57,14 +57,17 @@ class SideVision(Board):
         ret = []
         for i in range(4):
             max = np.argmax(diff)
+            print(max , diff[max])
 
-            print(diff[max])
 
-            if diff[max] < 0.04 and len(ret) > 1:
+            if diff[max] < 0.03 and len(ret) > 1:
                 break
             
             ret.append(max)
             diff[max] = 0
+        
+        ret.sort(reverse= True)
+        print("asd" , ret)
         return ret , self.CalculateDiff2(copy.deepcopy(ret),diff2),self.CalculateDiff3(diff3)
 
 
@@ -75,7 +78,7 @@ class SideVision(Board):
         while end:
             end = False
             for i in ret:
-                if i + 8 in ret and diff2[i+8] > diff2[i]:
+                if i + 8 in ret :
                     ret.remove(i)
                     end = True
                     break
@@ -114,39 +117,6 @@ class SideVision(Board):
         
 
     
-if __name__ == "__main__":
-
-
-        b = SideVision()
-     
-        
-        images = []
-        for i in range(40):
-            images.append(cv2.imread("side-vision-test-photos/"+str(i)+".png"))
-
-       
-        import chess
-        board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-
-
-        correct = 0
-        for i in range(0 , 40):
-            _,squares1 = b.get_movement(images[i + 1] , images[i],board.fen())
-            print("I returned this : " , type(str(squares1)),str(squares1))
-            print(squares1 , i)
-            if squares1 == "":
-
-                val = input("Enter your value: ")
-                move = chess.Move.from_uci(val)
-                board.push(move)
-
-            else:
-
-                board.push(squares1)
-                correct += 1
-                print("correct : " , str(correct))
-            print(board.fen())
-
 
 
 
