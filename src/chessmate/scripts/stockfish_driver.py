@@ -40,13 +40,13 @@ def chess_next_move_func(req):
     if SKILL_LEVEL == 1:
 
         for move in reversed(top_moves):
-            if len(move['Move']) == 4:
+            if len(move['Move']) == 4 and move['Move'] != "e1g1" and move['Move'] != "e1c1":
                 best_move = move['Move']
                 break
 
     if SKILL_LEVEL == 20:
         for move in top_moves:
-            if len(move['Move']) == 4:
+            if len(move['Move']) == 4 and move['Move'] != "e1g1" and move['Move'] != "e1c1":
                 best_move = move['Move']
                 break
 

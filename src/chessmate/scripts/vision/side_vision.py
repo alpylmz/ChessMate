@@ -13,6 +13,7 @@ class SideVision(Board):
 
     def __init__(self):
         self.cB = ChessBoard() 
+        self.rook = True
 
 
     
@@ -23,10 +24,24 @@ class SideVision(Board):
 
         print(diff2 , diff1 , diff3)
         if self.cB.FindMove(diff2 , fen) != []:
+
+            move = str(self.cB.FindMove(diff2 , fen))
+            if (move == "h8f8" or move == "a8d8" or move == "h8g8") and self.rook:
+                move = ""
+                self.rook = False
+
             return SIDE_VISION_SUCCESS, str(self.cB.FindMove(diff2 , fen))
         if self.cB.FindMove(diff1 , fen) != []:
+            move = str(self.cB.FindMove(diff2 , fen))
+            if (move == "h8f8" or move == "a8d8" or move == "h8g8") and self.rook:
+                move = ""
+                self.rook = False
             return SIDE_VISION_SUCCESS, str(self.cB.FindMove(diff1 , fen))
         if self.cB.FindMove(diff3 , fen) != []:
+            move = str(self.cB.FindMove(diff2 , fen))
+            if (move == "h8f8" or move == "a8d8" or move == "h8g8") and self.rook:
+                move = ""
+                self.rook = False
             return SIDE_VISION_SUCCESS, str(self.cB.FindMove(diff3 , fen))
         else :
             return SIDE_VISION_UNSUCCESS, ""
@@ -45,7 +60,7 @@ class SideVision(Board):
 
             print(diff[max])
 
-            if diff[max] < 0.03 and len(ret) > 1:
+            if diff[max] < 0.04 and len(ret) > 1:
                 break
             
             ret.append(max)

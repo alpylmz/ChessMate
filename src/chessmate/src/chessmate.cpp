@@ -62,7 +62,7 @@ const int LOSS=100003;
 const int IDLE=100004;
 /* Arduino driver return codes */
 
-const float ABOVE_ROBOT_HEIGHT = 0.40;
+const float ABOVE_ROBOT_HEIGHT = 0.35;
 //const float BOARD_PICK_HEIGHT = 0.275;
 //const float BOARD_PLACE_HEIGHT = 0.285;
 const float BOARD_PICK_HEIGHT = 0.285;
@@ -71,7 +71,7 @@ const float BOARD_PLACE_HEIGHT = 0.290;
 const float DUMP_BOX_X = 0.55;
 const float DUMP_BOX_Y = 0.41;
 
-const float RELEASE_GRIPPER_WIDTH = 0.038f;
+const float RELEASE_GRIPPER_WIDTH = 0.033f;
 
 bool definitely_lose = false;
 
@@ -291,9 +291,15 @@ int main(int argc, char** argv){
             first_loop = false;        
         }
 
+        resp = franka_go(go_client, 0, 0, 0, false, false, true, false);
+        if (!resp) {
+            continue;
+        }
 
         /* Here, go to side vision place.*/
         /* Update previous image and go on. */
+        ros::Duration(1.0).sleep();
+
         vision_srv_request.request.last_state_fen_string = fen_string;
         vision_srv_request.request.query_type = "update_prev";
         resp = vision_client.call(vision_srv_request);
@@ -359,7 +365,11 @@ int main(int argc, char** argv){
 
 
 
-
+        resp = franka_go(go_client, 0, 0, 0, false, false, true, false);
+        if (!resp) {
+            continue;
+        }
+        
 
         std::string movement_in_fen = "";
         vision_srv_request.request.last_state_fen_string = fen_string;
@@ -769,6 +779,13 @@ int main(int argc, char** argv){
         ROS_INFO_STREAM(" gripper release  successfull");
         //std::cin >> a;
 
+        resp = franka_go(go_client, put_place_square_position_x, put_place_square_position_y, ABOVE_ROBOT_HEIGHT, false, false, false, false);
+        if(!resp){
+            ROS_WARN_STREAM("Error in above go request");
+            ros::Duration(0.01).sleep();
+            continue;
+        }
+        ROS_INFO_STREAM("above go successfull");
 
         
         // Firstly, check whether we won the game or not.
