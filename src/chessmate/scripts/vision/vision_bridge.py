@@ -5,6 +5,7 @@ from camera import Camera
 from coordinate import Coordinate
 from top_vision import TopVision
 from side_vision import SideVision
+from color_top_vision import ColorTopVision
 #from face_tracer import FaceTracer
 from chessmate.srv import QueryVisionComponentResponse, QueryVisionComponent, getPositionOfPieces, getPositionOfPiecesResponse 
 #from chessmate.srv import readFinger , readFingerResponse
@@ -53,6 +54,7 @@ if __name__ == "__main__":
 
     camera = Camera()
     top_vision = TopVision(camera)
+    color_top = ColorTopVision(camera)
     side_vision = SideVision()
     #finger_reader = fingerReader()
     #face_tracer = FaceTracer(camera)
@@ -96,7 +98,8 @@ if __name__ == "__main__":
 
         if req.query_type == "top":
             current_image,_,_ = camera.GetImage()
-            return_code, movement_in_fen = top_vision.get_movement(req.last_state_fen_string)
+            #return_code, movement_in_fen = top_vision.get_movement(req.last_state_fen_string)
+            return_code, movement_in_fen = color_top.get_movement(req.last_state_fen_string)
             if return_code != TWO_DIFFERENCE_DETECTED:
                 cv2.imwrite(MISPREDICTED_IMAGE_PATH + "/image-" + str(mispredicted_image_counter) + ".png", current_image)
                 mispredicted_image_counter += 1
