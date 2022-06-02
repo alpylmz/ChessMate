@@ -278,6 +278,11 @@ int main(int argc, char** argv){
             {
                 random_hri_move(hri_client);
             }*/
+            vision_srv_request.request.last_state_fen_string = fen_string;
+            vision_srv_request.request.query_type = "read_fingers";
+            resp = vision_client.call(vision_srv_request);
+            int finger_count =  vision_srv_request.response.return_code;
+            std::cout << "This is finger count : " << finger_count << std::endl; 
 
             get_HRI_trajectory("salut", hri_client);
             first_loop = false;        
