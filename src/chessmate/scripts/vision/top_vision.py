@@ -277,18 +277,6 @@ class TopVision():
                 valid_movements.append(movement)
 
 
-        min_white_rating = float('inf')
-        logical_move = ""
-        for movement in valid_movements:
-            self.stockfish_engine.set_fen_position(last_state_fen_string)
-            self.stockfish_engine.make_moves_from_current_position(moves=[movement])
-            if self.stockfish_engine.get_evaluation()['value'] < min_white_rating:
-                min_white_rating = self.stockfish_engine.get_evaluation()['value']
-                logical_move = movement
-
-        valid_movements = [logical_move]
-
-
         return valid_movements
 
 
