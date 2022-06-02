@@ -4,7 +4,7 @@ import numpy as np
 import os
 import copy
 from return_codes import *
-from Camera import Camera
+from camera import Camera
 from vision_calibration_parameters import *
 
 
@@ -190,4 +190,4 @@ class ColorTopVision():
 if __name__ == '__main__':
     camera = Camera()
     top_vision = ColorTopVision(camera)
-    print(top_vision.get_movement('rnbq1rk1/ppppp2p/5n1b/3P1pB1/8/3Q4/PPP1PPPP/RN2KBNR b - - 0 1'))
+    print(top_vision.get_movement('pppppppp/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b - - 0 1'))

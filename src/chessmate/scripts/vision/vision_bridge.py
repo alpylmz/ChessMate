@@ -12,14 +12,17 @@ from return_codes import *
 from functools import partial
 from fingerReader import fingerReader
 
-A1_X = 0.4014470920338918
-A1_Y = 0.22229826375982784
-A8_X = 0.7272811452210761
-A8_Y = 0.22010953155514001
-H1_X = 0.40305517526720513
-H1_Y = -0.09984058193422411
-H8_X = 0.7263877184058034
-H8_Y = -0.10278467775327396
+A1_X = 0.40880437673662673
+A1_Y = 0.23538323109280496
+A8_X = 0.7362208208605283
+A8_Y = 0.23226760916460845
+H1_X = 0.40483270560282775
+H1_Y = -0.09127280227221675
+H8_X = 0.7310001890779545
+H8_Y = -0.09420890277272262
+
+
+
 
 
 
@@ -55,7 +58,7 @@ if __name__ == "__main__":
     top_vision = TopVision(camera)
     color_top = ColorTopVision(camera)
     side_vision = SideVision()
-    finger_reader = fingerReader()
+    #finger_reader = fingerReader()
     #face_tracer = FaceTracer(camera)
 
 
@@ -96,8 +99,14 @@ if __name__ == "__main__":
 
         if req.query_type == "top":
             current_image,_,_ = camera.GetImage()
-            #return_code, movement_in_fen = top_vision.get_movement(req.last_state_fen_string)
+            return_code, movement_in_fen = top_vision.get_movement(req.last_state_fen_string)
+            if return_code == TWO_DIFFERENCE_DETECTED:
+                return QueryVisionComponentResponse(return_code, movement_in_fen)
+
             return_code, movement_in_fen = color_top.get_movement(req.last_state_fen_string)
+            if return_code == TWO_DIFFERENCE_DETECTED:
+                return QueryVisionComponentResponse(return_code, movement_in_fen)
+            
             if return_code != TWO_DIFFERENCE_DETECTED:
                 cv2.imwrite(MISPREDICTED_IMAGE_PATH + "/image-" + str(mispredicted_image_counter) + ".png", current_image)
                 mispredicted_image_counter += 1

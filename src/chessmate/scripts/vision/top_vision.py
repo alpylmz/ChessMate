@@ -347,4 +347,4 @@ class TopVision():
 if __name__ == '__main__':
     camera = Camera()
     top_vision = TopVision(camera)
-    print(top_vision.get_movement("r3k2r/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b - - 0 1"))
+    print(top_vision.get_movement("pppppppp/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b - - 0 1"))

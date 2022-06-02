@@ -30,7 +30,8 @@
 #include "franka_gripper/GripperCommand.h"
 
 std::string fen_string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1";
-
+//std::string fen_string = "rnbqkbnr/pppppppp/8/8/8/8/8/4K3 b KQkq - 0 1";
+ 
 /* Vision function return codes */
 const int CHESSBOARD_NOT_DETECTED=0;
 const int NO_DIFFERENCE_DETECTED=2000;
@@ -61,7 +62,7 @@ const int LOSS=100003;
 const int IDLE=100004;
 /* Arduino driver return codes */
 
-const float ABOVE_ROBOT_HEIGHT = 0.37;
+const float ABOVE_ROBOT_HEIGHT = 0.40;
 //const float BOARD_PICK_HEIGHT = 0.275;
 //const float BOARD_PLACE_HEIGHT = 0.285;
 const float BOARD_PICK_HEIGHT = 0.285;
@@ -69,6 +70,8 @@ const float BOARD_PLACE_HEIGHT = 0.290;
 
 const float DUMP_BOX_X = 0.55;
 const float DUMP_BOX_Y = 0.41;
+
+const float RELEASE_GRIPPER_WIDTH = 0.038f;
 
 bool definitely_lose = false;
 
@@ -278,11 +281,11 @@ int main(int argc, char** argv){
             {
                 random_hri_move(hri_client);
             }*/
-            vision_srv_request.request.last_state_fen_string = fen_string;
-            vision_srv_request.request.query_type = "read_fingers";
-            resp = vision_client.call(vision_srv_request);
-            int finger_count =  vision_srv_request.response.return_code;
-            std::cout << "This is finger count : " << finger_count << std::endl; 
+            //vision_srv_request.request.last_state_fen_string = fen_string;
+            //vision_srv_request.request.query_type = "read_fingers";
+            //resp = vision_client.call(vision_srv_request);
+            //int finger_count =  vision_srv_request.response.return_code;
+            //std::cout << "This is finger count : " << finger_count << std::endl; 
 
             get_HRI_trajectory("salut", hri_client);
             first_loop = false;        
@@ -602,7 +605,7 @@ int main(int argc, char** argv){
             ROS_INFO_STREAM("foourth go successfull");
 
 
-            gripper_move(gripper_client, 0.04, 0.05, 50, false, true, false);
+            gripper_move(gripper_client, RELEASE_GRIPPER_WIDTH, 0.05, 50, false, true, false);
             
             //std::cin >> a;
             //joint_request.request.chess_place = put_place_square;
@@ -645,7 +648,7 @@ int main(int argc, char** argv){
             ROS_INFO_STREAM("DUMPING THE PIECE. ARE YOU READY?");
             //std::cin >> a;
 
-            gripper_move(gripper_client, 0.04, 0.05, 50, false, true, false);
+            gripper_move(gripper_client, RELEASE_GRIPPER_WIDTH, 0.05, 50, false, true, false);
             
             ROS_WARN_STREAM("DUMPED THE PIECE SUCCESSFULLY");
             //ROS_WARN_STREAM("YOU ARE TRYING TO TAKE A PIECE BUT IT IS NOT IMPLEMENTED!");
@@ -691,7 +694,7 @@ int main(int argc, char** argv){
         
         // prepare gripper
         //std::cin >> a;
-        gripper_move(gripper_client, 0.04, 0.05, 50, false, true, false);
+        gripper_move(gripper_client, RELEASE_GRIPPER_WIDTH, 0.05, 50, false, true, false);
 
         ROS_INFO_STREAM("gripper successfull");
 
@@ -762,7 +765,7 @@ int main(int argc, char** argv){
         ROS_INFO_STREAM("fifth go successfull");
 
         //std::cin >> a;
-        gripper_move(gripper_client, 0.05, 0.05, 50, false, true, false);
+        gripper_move(gripper_client, RELEASE_GRIPPER_WIDTH, 0.05, 50, false, true, false);
         ROS_INFO_STREAM(" gripper release  successfull");
         //std::cin >> a;
 

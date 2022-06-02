@@ -3,10 +3,9 @@ import pyrealsense2 as real_sense
 import numpy as np
 import copy
 import os
-from beepy import beep
 from skimage.metrics import structural_similarity
 from datetime import datetime
-from Camera import Camera
+from camera import Camera
 
 
 # get current directory
@@ -203,9 +202,9 @@ class Difference():
                 color_image, depth_frame, depth_scale = self.camera.GetImage()
                 #color_image = cv2.imread(TEST_PATH + "image-" + str(COUNTER) + ".png")
                 #self.square_width, self.square_height, self.x_pixel, self.y_pixel = self.find_corners(color_image)
-                #self.square_width, self.square_height, self.x_pixel, self.y_pixel = 45,45,193,52
-                #self.get_empty_full_information(color_image, self.square_width, self.square_height, self.x_pixel, self.y_pixel)
-                self.generate_empty_squares(color_image, self.square_width, self.square_height, self.x_pixel, self.y_pixel,False)
+                self.square_width, self.square_height, self.x_pixel, self.y_pixel = 45,45,192,50
+                self.get_empty_full_information(color_image, self.square_width, self.square_height, self.x_pixel, self.y_pixel)
+                #self.generate_empty_squares(color_image, self.square_width, self.square_height, self.x_pixel, self.y_pixel,False)
 
 
                 key = cv2.waitKey(1)
@@ -214,7 +213,7 @@ class Difference():
 
 
                 if key & 0xFF == ord('g'):
-                    self.generate_empty_squares(color_image,square_width,square_height,x_pixel,y_pixel,True)
+                    self.generate_empty_squares(color_image, self.square_width, self.square_height, self.x_pixel, self.y_pixel,True)
 
 
                 if key & 0xFF == ord('q') or key == 27:
@@ -226,7 +225,7 @@ class Difference():
 
 
         finally:
-            self.camera.stop()
+            self.camera.Stop()
 
 
 
