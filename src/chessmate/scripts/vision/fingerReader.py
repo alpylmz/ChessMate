@@ -79,34 +79,33 @@ class fingerReader() :
 
 
 
+if __name__ == '__main__':
+    
+    a = fingerReader()
 
-import cv2
-  
-a = fingerReader()
 
+    # define a video capture object
+    vid = cv2.VideoCapture(0)
+    end = 0
+    while(True):
+        
+        # Capture the video frame
+        # by frame
+        ret, frame = vid.read()
 
-# define a video capture object
-vid = cv2.VideoCapture(0)
-end = 0
-while(True):
-      
-    # Capture the video frame
-    # by frame
-    ret, frame = vid.read()
+        t = a.readFinger(frame)
+        if(t != -1):
+            print(t)
+            if(end == 4):
+                break
 
-    t = a.readFinger(frame)
-    if(t != -1):
-        print(t)
-        if(end == 4):
+    
+        # Display the resulting frame
+        cv2.imshow('frame', frame)
+        
+        # the 'q' button is set as the
+        # quitting button you may use any
+        # desired button of your choice
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-
-  
-    # Display the resulting frame
-    cv2.imshow('frame', frame)
-      
-    # the 'q' button is set as the
-    # quitting button you may use any
-    # desired button of your choice
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
 
