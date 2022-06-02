@@ -8,10 +8,9 @@ from side_vision import SideVision
 from color_top_vision import ColorTopVision
 #from face_tracer import FaceTracer
 from chessmate.srv import QueryVisionComponentResponse, QueryVisionComponent, getPositionOfPieces, getPositionOfPiecesResponse 
-#from chessmate.srv import readFinger , readFingerResponse
 from return_codes import *
 from functools import partial
-#from fingerReader import fingerReader
+from fingerReader import fingerReader
 
 A1_X = 0.4014470920338918
 A1_Y = 0.22229826375982784
@@ -56,17 +55,10 @@ if __name__ == "__main__":
     top_vision = TopVision(camera)
     color_top = ColorTopVision(camera)
     side_vision = SideVision()
-    #finger_reader = fingerReader()
+    finger_reader = fingerReader()
     #face_tracer = FaceTracer(camera)
 
 
-    #rospy.Service("/read_fingers",readFinger , readFinger)
-
-    #def readFinger(req):
-    #    finger = finger_reader(camera.GetImage())
-    #    return readFingerResponse(finger)
-
-    # queryvisioncomponent handler, executes vision_system.get_movement()
     def queryvisioncomponent_handler(req):
         global side_vision_prev_image
         global MISPREDICTED_IMAGE_PATH
@@ -81,6 +73,12 @@ if __name__ == "__main__":
 
         if req.query_type == "test":
             return QueryVisionComponentResponse(1,"")
+
+
+        if req.query_type == "read_fingers":
+            image,_,_ = camera.GetImage()
+            return QueryVisionComponentResponse(finger_reader.readFinger(image),"")
+
 
         if req.query_type == "update_prev":
             side_vision_prev_image,_,_ = camera.GetImage()
