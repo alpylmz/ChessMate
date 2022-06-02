@@ -42,8 +42,8 @@ class ColorTopVision():
         black_cp1 = copy.deepcopy(image)
         white_cp2 = copy.deepcopy(image)
 
-        lower = np.array([0, 0, 0])
-        upper = np.array([179, 255, 39])
+        lower = np.array(BLACK_LOWER)
+        upper = np.array(BLACK_UPPER)
         hsv = cv2.cvtColor(black_cp1, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, lower, upper)
         result = cv2.bitwise_and(black_cp1, black_cp1, mask=mask)
@@ -52,8 +52,8 @@ class ColorTopVision():
         if np.average(result_bgr) > 1.1:
             return 'B'
 
-        lower = np.array([0, 66, 85])
-        upper = np.array([179, 255, 255])
+        lower = np.array(WHITE_LOWER)
+        upper = np.array(WHITE_UPPER)
         hsv = cv2.cvtColor(white_cp2, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, lower, upper)
         result = cv2.bitwise_and(white_cp2, white_cp2, mask=mask)
