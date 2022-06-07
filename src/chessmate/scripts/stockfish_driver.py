@@ -6,8 +6,9 @@ from chessmate.srv import chess_game_state, chess_game_stateResponse
 
 
 # need stockfish binary path!   
-#_stockfish = stockfish.Stockfish(path="/home/alp/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64")
-_stockfish = stockfish.Stockfish(path="/home/dogukan/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64")
+_stockfish = stockfish.Stockfish(path="/home/alp/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64")
+print("/home/alp/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64")
+#_stockfish = stockfish.Stockfish(path="/home/dogukan/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64")
 
 
 # Set starting state of the board. 

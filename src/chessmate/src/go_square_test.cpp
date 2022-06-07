@@ -58,7 +58,7 @@ int main(int argc, char** argv){
     
     ROS_INFO_STREAM("Going to side vision position!!");
 
-    resp = franka_go(go_client, 0, 0, 0, false, false, true, false);
+    resp = franka_go(go_client, 0, 0, 0, false, false, true, false, true);
     if (!resp) {
         ROS_WARN_STREAM("ERROR IN GOING TO INIT!");
         return 0;
@@ -89,7 +89,7 @@ int main(int argc, char** argv){
         std::cout << "square_position_x: " << square_position_x << std::endl;
         std::cout << "square_position_y: " << square_position_y << std::endl;
 
-        resp = franka_go(go_client, square_position_x, square_position_y, height, false, false, false, true);
+        resp = franka_go(go_client, square_position_x, square_position_y, height, false, false, false, true, true);
         //resp = joint_client.call(joint_request);
         if(!resp){
             ROS_WARN_STREAM("Error in first go request");
