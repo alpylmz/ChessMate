@@ -4,7 +4,7 @@ import numpy as np
 import os
 import copy
 from return_codes import *
-from camera import Camera
+from Camera import Camera
 from vision_calibration_parameters import *
 
 
@@ -12,8 +12,8 @@ from vision_calibration_parameters import *
 class ColorTopVision():
     def __init__(self, camera_object=Camera):
         self.camera = camera_object
-        self.square_information = np.ones((8, 8), dtype=str)
-
+        self.current_state = np.ones((8, 8), dtype=str)
+        self.last_state = np.ones((8, 8), dtype=str)
 
     def get_square_as_string(self, i, j):
         row = 8 - i
@@ -40,7 +40,6 @@ class ColorTopVision():
 
     def get_color_of_square(self, image):
         black_cp1 = copy.deepcopy(image)
-        white_cp2 = copy.deepcopy(image)
 
         lower = np.array(BLACK_LOWER)
         upper = np.array(BLACK_UPPER)
@@ -50,18 +49,8 @@ class ColorTopVision():
         result_bgr = cv2.cvtColor(result, cv2.COLOR_HSV2BGR)
         black_average = np.average(result_bgr)
         if np.average(result_bgr) > 1.1:
+            print(np.average(result_bgr))
             return 'B'
-
-        lower = np.array(WHITE_LOWER)
-        upper = np.array(WHITE_UPPER)
-        hsv = cv2.cvtColor(white_cp2, cv2.COLOR_BGR2HSV)
-        mask = cv2.inRange(hsv, lower, upper)
-        result = cv2.bitwise_and(white_cp2, white_cp2, mask=mask)
-        result_bgr = cv2.cvtColor(result, cv2.COLOR_HSV2BGR)
-
-        white_average = np.average(result_bgr)
-        if np.average(result_bgr) > 5:
-            return 'W'
 
         return 'E'
 
@@ -147,7 +136,14 @@ class ColorTopVision():
             for j in range(8):
                 square_image = board_image[y_pixel + int(square_height) * i + offset: y_pixel + int(square_height) * (i + 1) - offset,x_pixel + int(square_width) * j + offset: x_pixel + int(square_width) * (j + 1) - offset]
 
-                self.square_information[i][j] = self.get_color_of_square(square_image)
+                if self.get_color_of_square(square_image) == 'B':
+                    self.current_state[i][j] = 'B'
+
+                else:
+                    if self.last_state[i][j] == 'B':
+                        self.current_state[i][j] = 'E'
+                    else:
+                        self.current_state[i][j] = self.last_state[i][j]
 
 
     def get_movement(self, last_state_fen_string):
@@ -161,15 +157,16 @@ class ColorTopVision():
                 color_frame, depth_frame, depth_scale = self.camera.GetImage()
                 square_width, square_height, x_pixel, y_pixel = TOP_VISION_SQUARE_WIDTH,TOP_VISION_SQUARE_HEIGHT,TOP_VISION_SQUARE_X_PIXEL,TOP_VISION_SQUARE_Y_PIXEL
 
+                self.last_state = self.get_last_state(last_state_fen_string)
                 self.get_empty_full_information(color_frame, square_width, square_height, x_pixel, y_pixel)
-                last_state = self.get_last_state(last_state_fen_string)
+
 
                 ## No movement detected.
-                if (last_state == self.square_information).all():
+                if (self.last_state == self.current_state).all():
                     return NO_DIFFERENCE_DETECTED, ""
 
                 ## Movement detected.
-                number_of_differences, movement = self.decide_movement_with_comparing_states(last_state,self.square_information)
+                number_of_differences, movement = self.decide_movement_with_comparing_states(self.last_state, self.current_state)
 
                 if number_of_differences == 2:
                     return TWO_DIFFERENCE_DETECTED, movement
@@ -183,11 +180,10 @@ class ColorTopVision():
             return EXCEPTION_IN_THE_LOOP,""
 
         finally:
-            pass
-            #self.camera.stop()
+            self.camera.stop()
 
 
 if __name__ == '__main__':
     camera = Camera()
     top_vision = ColorTopVision(camera)
-    print(top_vision.get_movement('pppppppp/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b - - 0 1'))
+    print(top_vision.get_movement('rnbqkbnr/ppp1pppp/8/3P4/8/8/PPPP1PPP/RNBQKBNR w - - 0 1'))
