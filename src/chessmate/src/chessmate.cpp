@@ -611,21 +611,8 @@ int main(int argc, char** argv){
             //std::cin >> a;
             //joint_request.request.chess_place = put_place_square + "above";
             //resp = joint_client.call(joint_request);
-<<<<<<< HEAD
             ROS_INFO_STREAM("Sending a false");
             resp = franka_go(go_client, put_place_square_position_x, put_place_square_position_y, ABOVE_ROBOT_HEIGHT, false, false, false, true, false);
-=======
-            resp = franka_go(go_client, put_place_square_position_x, put_place_square_position_y, ABOVE_ROBOT_HEIGHT, false, false, false, true);
-            if(!resp){
-                ROS_WARN_STREAM("Error in fourth go request");
-                ros::Duration(0.01).sleep();
-                continue;
-            }
-            ROS_INFO_STREAM("foourth go successfull");
-
-
-            gripper_move(gripper_client, RELEASE_GRIPPER_WIDTH, 0.05, 50, false, true, false);
->>>>>>> 46cbcc84114ff04f0aa932be9b552bf6b7e23929
             
             //std::cin >> a;
             //joint_request.request.chess_place = put_place_square;
@@ -697,22 +684,6 @@ int main(int argc, char** argv){
             ROS_INFO_STREAM("Sending a false");
             resp = franka_go(go_client, take_place_square_position_x, take_place_square_position_y, ABOVE_ROBOT_HEIGHT, false, false, false, true, false);
         }
-<<<<<<< HEAD
-=======
-        //resp = joint_client.call(joint_request);
-        if(!resp){
-            ROS_WARN_STREAM("Error in first go request");
-            ros::Duration(0.01).sleep();
-            continue;
-        }
-        ROS_INFO_STREAM("go successfull");
-        
-        // prepare gripper
-        //std::cin >> a;
-        gripper_move(gripper_client, RELEASE_GRIPPER_WIDTH, 0.05, 50, false, true, false);
-
-        ROS_INFO_STREAM("gripper successfull");
->>>>>>> 46cbcc84114ff04f0aa932be9b552bf6b7e23929
 
         // go to take piece
             ROS_INFO_STREAM("Sending a true");
