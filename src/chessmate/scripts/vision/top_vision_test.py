@@ -30,7 +30,6 @@ class Difference():
 
 
     def generate_empty_squares(self,board_image, square_width, square_height, x_pixel, y_pixel,is_generate):
-        print("Generated.")
         offset = 7
         for i in range(8):
             for j in range(8):
@@ -38,6 +37,7 @@ class Difference():
                                   x_pixel + int(square_width) * j + offset: x_pixel + int(square_width) * (j + 1) - offset]
 
                 if is_generate:
+                    print("Generated.")
                     cv2.imwrite(EMPTY_IMAGE_PATH + str(i) + str(j) + ".png",empty_image)
 
                 cv2.rectangle(board_image,
@@ -202,8 +202,8 @@ class Difference():
                 color_image, depth_frame, depth_scale = self.camera.GetImage()
                 #color_image = cv2.imread(TEST_PATH + "image-" + str(COUNTER) + ".png")
                 #self.square_width, self.square_height, self.x_pixel, self.y_pixel = self.find_corners(color_image)
-                self.square_width, self.square_height, self.x_pixel, self.y_pixel = 45,45,188,48
-                self.get_empty_full_information(color_image, self.square_width, self.square_height, self.x_pixel, self.y_pixel)
+                self.square_width, self.square_height, self.x_pixel, self.y_pixel = 47,47,169,51
+                #self.get_empty_full_information(color_image, self.square_width, self.square_height, self.x_pixel, self.y_pixel)
                 #self.generate_empty_squares(color_image, self.square_width, self.square_height, self.x_pixel, self.y_pixel,False)
 
 

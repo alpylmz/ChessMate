@@ -6,13 +6,15 @@ from chessmate.srv import chess_game_state, chess_game_stateResponse
 
 
 # need stockfish binary path!   
-_stockfish = stockfish.Stockfish(path="/home/alp/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64")
-print("/home/alp/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64")
-#_stockfish = stockfish.Stockfish(path="/home/dogukan/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64")
+#_stockfish = stockfish.Stockfish(path="/home/alp/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64")
+_stockfish = stockfish.Stockfish(path="/home/dogukan/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64")
 
 
-# Set starting state of the board. 
-INITIAL_FEN_STRING = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1"
+# Set starting state of the board.
+INITIAL_FEN_STRING = "3rr1k1/pp3ppp/3b4/2p5/2Q5/6qP/PPP1B1P1/R1B2K1R b KQkq - 0 1"
+# hard fen INITIAL_FEN_STRING = "3rr1k1/pp3ppp/3b4/2p5/2Q5/6qP/PPP1B1P1/R1B2K1R b KQkq - 0 1"
+# easy fen INITIAL_FEN_STRING = "k5rr/Ppp5/8/4Q3/1P1P4/3q3P/5PP1/R3R1K1 b KQkq - 0 1" 
+# basic fen INITIAL_FEN_STRING = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1"
 #INITIAL_FEN_STRING = "rnbqkbnr/pppppppp/8/8/8/8/8/4K3 b KQkq - 0 1"
 
 print("initializing with fen string")

@@ -4,7 +4,7 @@ import numpy as np
 import os
 import copy
 from return_codes import *
-from Camera import Camera
+from camera import Camera
 from vision_calibration_parameters import *
 
 
@@ -48,7 +48,7 @@ class ColorTopVision():
         result = cv2.bitwise_and(black_cp1, black_cp1, mask=mask)
         result_bgr = cv2.cvtColor(result, cv2.COLOR_HSV2BGR)
         black_average = np.average(result_bgr)
-        if np.average(result_bgr) > 1.1:
+        if np.average(result_bgr) > 1.0:
             print(np.average(result_bgr))
             return 'B'
 
@@ -179,11 +179,9 @@ class ColorTopVision():
             print(e)
             return EXCEPTION_IN_THE_LOOP,""
 
-        finally:
-            self.camera.stop()
 
 
 if __name__ == '__main__':
     camera = Camera()
     top_vision = ColorTopVision(camera)
-    print(top_vision.get_movement('rnbqkbnr/ppp1pppp/8/3P4/8/8/PPPP1PPP/RNBQKBNR w - - 0 1'))
+    print(top_vision.get_movement("rnbqk2r/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b - - 0 1"))

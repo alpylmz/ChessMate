@@ -10,7 +10,7 @@ from camera import Camera
 from vision_calibration_parameters import *
 
 #### STOCKFISH executable path ####
-STOCKFISH_PATH = "/home/alp/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64"
+STOCKFISH_PATH = "/home/dogukan/Downloads/stockfish_14.1_linux_x64/stockfish_14.1_linux_x64"
 
 
 
